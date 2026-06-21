@@ -659,10 +659,11 @@ function renderDashboard() {
     const ingM = txnM.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
     const egM = txnM.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
     const codigo = simboloACodigoTc(simbolo);
-    const tc = getTc(codigo, finMes);
-    if(tc && tc > 0) {
-      totalIngresos += ingM * tc;
-      totalEgresos += egM * tc;
+    const tcCompra = getTc(codigo, finMes, 'compra');
+    const tcVenta = getTc(codigo, finMes, 'venta');
+    if(tcCompra || tcVenta) {
+      totalIngresos += ingM * (tcCompra || tcVenta);
+      totalEgresos += egM * (tcVenta || tcCompra);
     } else {
       faltaTc = true;
     }
@@ -690,7 +691,7 @@ function renderDashboard() {
   // Egresos por categoría — colonizados
   const egxcat = {};
   delMes.filter(t=>t.tipo==='egreso').forEach(t=>{
-    const tc = t.moneda === '₡' ? 1 : (getTc(simboloACodigoTc(t.moneda), finMes) || 0);
+    const tc = t.moneda === '₡' ? 1 : (getTc(simboloACodigoTc(t.moneda), t.fecha, 'venta') ?? 0);
     egxcat[t.categoria] = (egxcat[t.categoria]||0) + t.monto * tc;
   });
   const maxVal = Math.max(...Object.values(egxcat), 1);
