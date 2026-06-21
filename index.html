@@ -740,6 +740,8 @@ function renderPresupuesto() {
   const mes = mesActual();
   const delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
   const list = document.getElementById('presupuesto-list');
+  console.log('delMes egresos:', delMes);
+  console.log('mes:', mes);	
   if(!list) return;
 
   list.innerHTML = CATS_EGRESO.map(cat => {
