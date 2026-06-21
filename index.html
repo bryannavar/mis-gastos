@@ -404,7 +404,12 @@ function parseMonto() {
 
 async function agregarTxn() {
   const monto = parseMonto();
-  if(!monto || monto <= 0) { alert('Ingresá un monto válido'); return; }
+  if(!monto || monto <= 0) {
+    const err = document.getElementById('msg-err');
+    err.textContent = 'Ingresá un monto válido'; err.style.display = 'block';
+    setTimeout(() => err.style.display = 'none', 2500);
+    return;
+  }
   const btn = document.getElementById('btn-guardar');
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> Guardando...';
 
@@ -439,17 +444,23 @@ async function agregarTxn() {
   document.getElementById('inp-nota').value = '';
   document.getElementById('msg-err').style.display = 'none';
   const ok = document.getElementById('msg-ok');
-  ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 2500);
+  ok.style.display = 'block';
+  setTimeout(() => {
+    ok.style.display = 'none';
+    showTab('dashboard');
+  }, 1500);
   renderDashboard();
 }
 
 async function deleteTxn(id) {
-  if(!confirm('¿Eliminar esta transacción?')) return;
   const { error } = await sb.from('transacciones').delete().eq('id', id);
   if(!error) {
     allTxn = allTxn.filter(t => t.id !== id);
     renderDashboard();
-    renderHistorial();
+    if(document.getElementById('tab-historial').style.display !== 'none') {
+      populateMesSelector();
+      renderHistorial();
+    }
   }
 }
 
