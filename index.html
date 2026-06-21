@@ -669,24 +669,23 @@ function renderDashboard() {
   // Sumar otras monedas colonizadas a ingresos/egresos/saldo
   let totalIngresos = ingresosCol;
   let totalEgresos = egresosCol;
-  let faltaTc = false;
+  const fechasFaltantes = new Set();
   const otrasMonedas = [...new Set(delMes.filter(t=>t.moneda!=='₡').map(t=>t.moneda))];
 
   otrasMonedas.forEach(simbolo => {
     const txnM = delMes.filter(t=>t.moneda===simbolo);
-    const ingM = txnM.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-    const egM = txnM.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
     const codigo = simboloACodigoTc(simbolo);
-    const tcCompra = getTc(codigo, finMes, 'compra');
-    const tcVenta = getTc(codigo, finMes, 'venta');
-    if(tcCompra || tcVenta) {
-      totalIngresos += ingM * (tcCompra || tcVenta);
-      totalEgresos += egM * (tcVenta || tcCompra);
-    } else {
-      faltaTc = true;
-    }
+    txnM.forEach(t => {
+      const tcCompra = getTc(codigo, t.fecha, 'compra');
+      const tcVenta = getTc(codigo, t.fecha, 'venta');
+      if(tcCompra || tcVenta) {
+        if(t.tipo === 'ingreso') totalIngresos += t.monto * (tcCompra || tcVenta);
+        else totalEgresos += t.monto * (tcVenta || tcCompra);
+      } else {
+        fechasFaltantes.add(t.fecha);
+      }
+    });
   });
-
   const saldoTotal = totalIngresos - totalEgresos;
 
   document.getElementById('total-ingresos').textContent = fmt(totalIngresos, '₡');
@@ -699,8 +698,11 @@ function renderDashboard() {
   sm.className = 'saldo-monto ' + (saldoTotal>=0?'positivo':'negativo');
 
   const warnEl = document.getElementById('tc-warning');
-  if(faltaTc) {
-    warnEl.textContent = '⚠ Hay transacciones en otra moneda sin tipo de cambio definido. Definilo en Config para incluirlas en el total.';
+  if(fechasFaltantes.size > 0) {
+    const fechas = [...fechasFaltantes].sort().map(f =>
+      new Date(f+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short'})
+    ).join(', ');
+    warnEl.textContent = `⚠ Falta tipo de cambio para: ${fechas}. Cargalo en Config.`;
     warnEl.style.display = 'block';
   } else {
     warnEl.style.display = 'none';
