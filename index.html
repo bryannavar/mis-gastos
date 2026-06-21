@@ -454,7 +454,16 @@ async function guardarTipoCambio() {
   }
 
   const { data: { user } } = await sb.auth.getUser();
-  const { data, error } = await sb.from('tipo_cambio').insert({ user_id: user.id, moneda, fecha, valor }).select().single();
+  const { data, error } = await sb.from('tipo_cambio')
+  .insert({
+    user_id: user.id,
+    moneda,
+    fecha,
+    valorCompra: valorcompra,
+    valorVenta: valorventa
+  })
+  .select()
+  .single();
 
   if(error) {
     errEl.textContent = 'Error: ' + error.message;
