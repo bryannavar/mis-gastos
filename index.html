@@ -429,14 +429,6 @@ function getTc(codigoMoneda, fechaRef, tipo = 'venta') {
   return tipo === 'compra' ? (row.valorCompra || row.valorVenta) : (row.valorVenta || row.valorCompra);
 }
 
-  if (!disponibles.length) return null;
-
-  return {
-    compra: disponibles[0].valorCompra,
-    venta: disponibles[0].valorVenta
-  };
-}
-
 async function guardarTipoCambio() {
   const moneda = document.getElementById('tc-moneda').value;
   const valorcompra = parseFloat(document.getElementById('tc-valorCompra').value);
