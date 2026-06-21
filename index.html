@@ -218,7 +218,7 @@
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Monto</label>
-        <input type="number" id="inp-monto" placeholder="0" min="0" step="100">
+        <input type="text" id="inp-monto" placeholder="0" inputmode="numeric" style="text-align:right;" oninput="formatMonto(this)">
       </div>
       <div class="form-group">
         <label class="form-label">Moneda</label>
@@ -391,8 +391,19 @@ async function loadTxn() {
   if(!error && data) allTxn = data;
 }
 
+function formatMonto(input) {
+  let raw = input.value.replace(/[^0-9]/g, '');
+  if(!raw) { input.value = ''; return; }
+  input.value = parseInt(raw).toLocaleString('es-CR');
+}
+
+function parseMonto() {
+  const raw = document.getElementById('inp-monto').value.replace(/[^0-9]/g, '');
+  return parseFloat(raw) || 0;
+}
+
 async function agregarTxn() {
-  const monto = parseFloat(document.getElementById('inp-monto').value);
+  const monto = parseMonto();
   if(!monto || monto <= 0) { alert('Ingresá un monto válido'); return; }
   const btn = document.getElementById('btn-guardar');
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> Guardando...';
