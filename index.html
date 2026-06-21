@@ -230,7 +230,7 @@
     </div>
     <div class="form-group">
       <label class="form-label">Nota (opcional)</label>
-      <input type="text" id="inp-nota" placeholder="ej: supermercado Más x Menos">
+      <input type="text" id="inp-nota" placeholder="ej: compra# 1">
     </div>
     <div class="form-group">
       <label class="form-label">Fecha</label>
@@ -739,9 +739,7 @@ function populateMesSelector() {
 function renderPresupuesto() {
   const mes = mesActual();
   const delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
-  const list = document.getElementById('presupuesto-list');
-  console.log('delMes egresos:', delMes);
-  console.log('mes:', mes);	
+  const list = document.getElementById('presupuesto-list');	
   if(!list) return;
 
   list.innerHTML = CATS_EGRESO.map(cat => {
