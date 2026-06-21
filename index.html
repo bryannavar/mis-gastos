@@ -792,14 +792,12 @@ function renderPresupuesto() {
 }
 
 function formatMontoPresupuesto(input) {
-  let raw = input.value.replace(/[^0-9]/g, '');
-  if(!raw) { input.value = ''; return; }
-  input.value = parseInt(raw).toLocaleString('es-CR');
+  let raw = input.value.replace(/[^0-9.]/g, '');
+  input.value = raw;
 }
 
 async function guardarPresupuesto(categoria, input) {
-  const raw = input.value.replace(/[^0-9]/g, '');
-  const monto = parseFloat(raw) || 0;
+  const monto = parseFloat(input.value) || 0;
   const mes = mesActual();
   const moneda = monedaPresupuesto;
   const { data: { user } } = await sb.auth.getUser();
