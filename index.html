@@ -9,6 +9,8 @@
   <meta name="theme-color" content="#ffffff">
   <title>Mi Presupuesto</title>
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -300,9 +302,12 @@ function showLoginErr(msg) {
 
 async function logout() {
   await sb.auth.signOut();
+  allTxn = [];
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('screen-login').style.display = 'flex';
-  allTxn = [];
+  document.getElementById('inp-email').value = '';
+  document.getElementById('login-msg').style.display = 'none';
+  document.getElementById('login-err').style.display = 'none';
 }
 
 sb.auth.onAuthStateChange(async (event, session) => {
@@ -311,6 +316,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('screen-app').style.display = 'block';
     await loadTxn();
     renderDashboard();
+  } else {
+    document.getElementById('screen-app').style.display = 'none';
+    document.getElementById('screen-login').style.display = 'flex';
+    allTxn = [];
   }
 });
 
@@ -339,6 +348,12 @@ async function agregarTxn() {
 
   const { data, error } = await sb.from('transacciones').insert(txn).select().single();
   btn.disabled = false; btn.innerHTML = '<i class="ti ti-check"></i> Guardar transacción';
+  if(error && (error.message.includes('JWT') || error.message.includes('session'))) {
+    await sb.auth.signOut();
+    document.getElementById('screen-app').style.display = 'none';
+    document.getElementById('screen-login').style.display = 'flex';
+    return;
+  }
 
   if(error) {
     const err = document.getElementById('msg-err');

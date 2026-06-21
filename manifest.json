@@ -1,16 +1,17 @@
 {
-  "name": "Mis Gastos",
-  "short_name": "Gastos",
+  "name": "Mi Presupuesto",
+  "short_name": "Mi Presupuesto",
   "description": "Control de ingresos y egresos personales",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#111827",
   "icons": [
     {
-      "src": "https://cdn.jsdelivr.net/npm/@tabler/icons@3.19.0/icons/wallet.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml"
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
