@@ -318,8 +318,13 @@ let allTc = [];
 let allPresupuestos = [];	
 
 function fmt(n, moneda) {
-  const num = Math.abs(Math.round(n)).toLocaleString('es-CR');
-  return moneda === '$' ? `$${num}` : `₡${num}`;
+  if(moneda === '$') {
+    const num = Math.abs(n).toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return `$${num}`;
+  } else {
+    const num = Math.abs(Math.round(n)).toLocaleString('es-CR');
+    return `₡${num}`;
+  }
 }
 
 function mesActual() {
