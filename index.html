@@ -309,6 +309,7 @@ let tipoActual = 'ingreso';
 let monedaActual = '₡';
 let allTxn = [];
 let allTc = [];
+let allPresupuestos = [];	
 
 function fmt(n, moneda) {
   const num = Math.abs(Math.round(n)).toLocaleString('es-CR');
@@ -388,7 +389,7 @@ async function initApp() {
     const { data: { session } } = await sb.auth.getSession();
     if(session) {
       showApp();
-      await Promise.all([loadTxn(), loadTc()]);
+      await Promise.all([loadTxn(), loadTc(), loadPresupuestos()]);
       renderDashboard();
     } else {
       showLogin();
@@ -428,6 +429,11 @@ async function loadTc() {
   if(!error && data) allTc = data;
 }
 
+async function loadPresupuestos() {
+  const { data, error } = await sb.from('presupuestos').select('*');
+  if(!error && data) allPresupuestos = data;
+}
+	
 function getTc(codigoMoneda, fechaRef, tipo = 'venta') {
   const disponibles = allTc.filter(
     t => t.moneda === codigoMoneda && t.fecha <= fechaRef
@@ -597,19 +603,20 @@ async function deleteTxn(id) {
 
 // UI
 function showTab(t) {
-  ['dashboard','agregar','historial','configuracion'].forEach(x => {
+  ['dashboard','agregar','presupuesto','historial','configuracion'].forEach(x => {
     document.getElementById('tab-'+x).style.display = x===t ? '' : 'none';
   });
   document.querySelectorAll('.tab').forEach((el,i) => {
-    el.classList.toggle('active', ['dashboard','agregar','historial','configuracion'][i]===t);
+    el.classList.toggle('active', ['dashboard','agregar','presupuesto','historial','configuracion'][i]===t);
   });
   if(t==='historial') { populateMesSelector(); renderHistorial(); }
+  if(t==='presupuesto') { renderPresupuesto(); }
   if(t==='configuracion') {
     renderTcHistorial();
     document.getElementById('tc-fecha').value = new Date().toISOString().slice(0,10);
   }
 }
-
+	
 function selectTipo(tipo) {
   tipoActual = tipo;
   document.getElementById('btn-ingreso').className = 'tipo-btn' + (tipo==='ingreso' ? ' selected-ingreso' : '');
@@ -727,6 +734,74 @@ function populateMesSelector() {
   const sel = document.getElementById('sel-mes');
   const cur = sel.value || mesActual();
   sel.innerHTML = meses.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${mesLabel(m)}</option>`).join('');
+}
+
+function renderPresupuesto() {
+  const mes = mesActual();
+  const delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
+  const list = document.getElementById('presupuesto-list');
+  if(!list) return;
+
+  list.innerHTML = CATS_EGRESO.map(cat => {
+    const presup = allPresupuestos.find(p => p.categoria === cat && p.mes === mes);
+    const gastado = delMes.filter(t => t.categoria === cat).reduce((s,t) => {
+      const tc = t.moneda === '₡' ? 1 : (getTc(simboloACodigoTc(t.moneda), t.fecha, 'venta') ?? 0);
+      return s + t.monto * tc;
+    }, 0);
+    const limite = presup ? presup.monto : 0;
+    const pct = limite > 0 ? Math.min(Math.round(gastado / limite * 100), 100) : 0;
+    const color = pct >= 100 ? '#dc2626' : pct >= 80 ? '#f59e0b' : '#10b981';
+
+    return `<div style="margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:14px; font-weight:600;">${cat}</span>
+        <input type="text" 
+          value="${limite > 0 ? limite.toLocaleString('es-CR') : ''}" 
+          placeholder="Sin límite"
+          inputmode="numeric"
+          style="width:110px; text-align:right; border:1px solid #e5e7eb; border-radius:8px; padding:4px 8px; font-size:13px;"
+          oninput="formatMontoPresupuesto(this)"
+          onblur="guardarPresupuesto('${cat}', this)">
+      </div>
+      ${limite > 0 ? `
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:#888; margin-bottom:4px;">
+          <span>${fmt(gastado, '₡')} gastado</span>
+          <span>${pct}%</span>
+        </div>
+        <div style="background:#f3f4f6; border-radius:99px; height:8px;">
+          <div style="width:${pct}%; background:${color}; border-radius:99px; height:8px; transition:width 0.3s;"></div>
+        </div>
+      ` : '<div style="font-size:11px; color:#ccc;">Sin presupuesto definido</div>'}
+    </div>`;
+  }).join('');
+}
+
+function formatMontoPresupuesto(input) {
+  let raw = input.value.replace(/[^0-9]/g, '');
+  if(!raw) { input.value = ''; return; }
+  input.value = parseInt(raw).toLocaleString('es-CR');
+}
+
+async function guardarPresupuesto(categoria, input) {
+  const raw = input.value.replace(/[^0-9]/g, '');
+  const monto = parseFloat(raw) || 0;
+  const mes = mesActual();
+  const { data: { user } } = await sb.auth.getUser();
+
+  const existe = allPresupuestos.find(p => p.categoria === categoria && p.mes === mes);
+  if(existe) {
+    if(monto === 0) {
+      await sb.from('presupuestos').delete().eq('id', existe.id);
+      allPresupuestos = allPresupuestos.filter(p => p.id !== existe.id);
+    } else {
+      await sb.from('presupuestos').update({ monto }).eq('id', existe.id);
+      existe.monto = monto;
+    }
+  } else if(monto > 0) {
+    const { data, error } = await sb.from('presupuestos').insert({ user_id: user.id, categoria, monto, mes }).select().single();
+    if(!error && data) allPresupuestos.push(data);
+  }
+  renderPresupuesto();
 }
 
 function renderHistorial() {
