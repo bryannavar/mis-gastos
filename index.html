@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Mi Presupuesto">
   <meta name="theme-color" content="#ffffff">
@@ -472,6 +472,13 @@ function renderHistorial() {
   const d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.moneda === moneda);
   const list = document.getElementById('historial-list');
   list.innerHTML = d.length ? d.map(t=>txnHTML(t)).join('') : '<div class="empty"><i class="ti ti-calendar"></i>Sin transacciones este mes</div>';
+}
+
+// Desregistrar service workers viejos
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
+  });
 }
 
 // INIT
