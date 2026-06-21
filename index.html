@@ -310,7 +310,8 @@ async function logout() {
   document.getElementById('login-err').style.display = 'none';
 }
 
-sb.auth.onAuthStateChange(async (event, session) => {
+async function initApp() {
+  const { data: { session } } = await sb.auth.getSession();
   if(session) {
     document.getElementById('screen-login').style.display = 'none';
     document.getElementById('screen-app').style.display = 'block';
@@ -319,9 +320,23 @@ sb.auth.onAuthStateChange(async (event, session) => {
   } else {
     document.getElementById('screen-app').style.display = 'none';
     document.getElementById('screen-login').style.display = 'flex';
+  }
+}
+
+sb.auth.onAuthStateChange(async (event, session) => {
+  if(event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    document.getElementById('screen-login').style.display = 'none';
+    document.getElementById('screen-app').style.display = 'block';
+    await loadTxn();
+    renderDashboard();
+  } else if(event === 'SIGNED_OUT') {
+    document.getElementById('screen-app').style.display = 'none';
+    document.getElementById('screen-login').style.display = 'flex';
     allTxn = [];
   }
 });
+
+initApp();
 
 // DATA
 async function loadTxn() {
