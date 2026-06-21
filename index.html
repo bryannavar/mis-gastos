@@ -824,7 +824,13 @@ async function guardarPresupuesto(categoria, input) {
   renderPresupuesto();
 }
 
-// Presupuesto del mes
+function renderHistorial() {
+  const mes = document.getElementById('sel-mes') ? document.getElementById('sel-mes').value || mesActual() : mesActual();
+  const d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
+  const list = document.getElementById('historial-list');
+  list.innerHTML = d.length ? d.map(t=>txnHTML(t)).join('') : '<div class="empty"><i class="ti ti-calendar"></i>Sin transacciones este mes</div>';
+
+  // Presupuesto del mes
   const egresos = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
   const presupMes = allPresupuestos.filter(p => p.mes === mes);
   const hpEl = document.getElementById('historial-presupuesto');
@@ -854,6 +860,7 @@ async function guardarPresupuesto(categoria, input) {
       </div>
     </div>`;
   }).join('');
+}
 
 // Desregistrar service workers viejos
 if('serviceWorker' in navigator) {
