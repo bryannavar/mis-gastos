@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eliminar mis datos — Mi Presupuesto</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; line-height: 1.7; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; min-height: 100vh; padding: 48px 32px; }
+    .header { text-align: center; margin-bottom: 40px; }
+    .logo { font-size: 40px; margin-bottom: 12px; }
+    .app-name { font-size: 20px; font-weight: 600; color: #111827; margin-bottom: 4px; }
+    h1 { font-size: 24px; font-weight: 600; color: #111827; margin-bottom: 12px; }
+    p { font-size: 15px; color: #374151; margin-bottom: 16px; }
+    .card { background: #f8f8f8; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+    .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    ul { padding-left: 20px; margin-bottom: 0; }
+    li { font-size: 14px; color: #374151; margin-bottom: 6px; }
+    .form-group { margin-bottom: 16px; }
+    label { font-size: 13px; font-weight: 500; color: #555; display: block; margin-bottom: 6px; }
+    input, textarea { width: 100%; padding: 11px 14px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 15px; font-family: inherit; }
+    textarea { height: 100px; resize: vertical; }
+    input:focus, textarea:focus { outline: none; border-color: #888; }
+    .btn { width: 100%; padding: 14px; background: #dc2626; border: none; border-radius: 12px; font-size: 15px; font-weight: 500; cursor: pointer; color: #fff; font-family: inherit; }
+    .btn:hover { background: #b91c1c; }
+    .msg { display: none; background: #f0fdf4; border: 1px solid #10b981; border-radius: 10px; padding: 16px; margin-top: 16px; color: #065f46; font-size: 14px; text-align: center; }
+    .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #9ca3af; }
+    a { color: #10b981; }
+    @media (max-width: 600px) { .container { padding: 32px 20px; } }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">💰</div>
+    <div class="app-name">Mi Presupuesto</div>
+  </div>
+
+  <h1>Solicitar eliminación de datos</h1>
+  <p>Podés solicitar la eliminación completa de tu cuenta y todos tus datos personales de Mi Presupuesto. Procesaremos tu solicitud en un plazo máximo de <strong>72 horas</strong>.</p>
+
+  <div class="card">
+    <h2>¿Qué se elimina?</h2>
+    <ul>
+      <li>Tu cuenta y correo electrónico</li>
+      <li>Todas tus transacciones (ingresos y egresos)</li>
+      <li>Historial financiero completo</li>
+      <li>Datos de sesión y tokens</li>
+    </ul>
+  </div>
+
+  <div class="form-group">
+    <label>Correo electrónico de tu cuenta</label>
+    <input type="email" id="email" placeholder="tucorreo@gmail.com">
+  </div>
+  <div class="form-group">
+    <label>Motivo (opcional)</label>
+    <textarea id="motivo" placeholder="Podés contarnos por qué querés eliminar tu cuenta..."></textarea>
+  </div>
+  <button class="btn" onclick="enviarSolicitud()">🗑 Solicitar eliminación de mi cuenta</button>
+  <div class="msg" id="msg">
+    ✅ Solicitud recibida. Procesaremos la eliminación de tu cuenta en las próximas 72 horas y te confirmaremos por correo.
+  </div>
+
+  <div class="footer">
+    <p><a href="https://mipresupuestocr.com">← Volver a Mi Presupuesto</a></p>
+    <p style="margin-top:8px">© 2026 Mi Presupuesto · <a href="/privacidad.html">Política de Privacidad</a></p>
+  </div>
+</div>
+
+<script>
+function enviarSolicitud() {
+  const email = document.getElementById('email').value.trim();
+  if(!email) { alert('Ingresá tu correo electrónico'); return; }
+  const motivo = document.getElementById('motivo').value.trim();
+  const subject = encodeURIComponent('Solicitud de eliminación de datos - Mi Presupuesto');
+  const body = encodeURIComponent(`Solicito la eliminación de mi cuenta y todos mis datos.\n\nCorreo: ${email}\nMotivo: ${motivo || 'No especificado'}`);
+  window.location.href = `mailto:bryannavarroj20@hotmail.com?subject=${subject}&body=${body}`;
+  document.getElementById('msg').style.display = 'block';
+}
+</script>
+</body>
+</html>
