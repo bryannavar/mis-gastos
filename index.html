@@ -252,11 +252,13 @@
 	
   <!-- HISTORIAL -->
   <div class="content" id="tab-historial" style="display:none">
-    <div class="form-row" style="margin-bottom:14px">
-      <select id="sel-mes" onchange="renderHistorial()"></select>
-    </div>
-    <div id="historial-list"></div>
+  <div class="form-row" style="margin-bottom:14px">
+    <select id="sel-mes" onchange="renderHistorial()"></select>
   </div>
+  <div id="historial-list"></div>
+  <div class="section-title" style="margin-top:24px;">Presupuesto del mes</div>
+  <div id="historial-presupuesto"></div>
+</div>
 
   <div style="text-align:center; padding: 20px 16px; border-top: 0.5px solid #e8e8e8; margin-top: 8px;">
     <p style="font-size: 13px; color: #555; margin-bottom: 4px;">🔒 Tu información es 100% privada y confidencial</p>
@@ -809,6 +811,39 @@ function renderHistorial() {
   const d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
   const list = document.getElementById('historial-list');
   list.innerHTML = d.length ? d.map(t=>txnHTML(t)).join('') : '<div class="empty"><i class="ti ti-calendar"></i>Sin transacciones este mes</div>';
+
+  // Presupuesto del mes
+  const egresos = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
+  const presupMes = allPresupuestos.filter(p => p.mes === mes);
+  const hpEl = document.getElementById('historial-presupuesto');
+  if(!hpEl) return;
+
+  if(!presupMes.length) {
+    hpEl.innerHTML = '<div class="empty">Sin presupuesto definido para este mes</div>';
+    return;
+  }
+
+  hpEl.innerHTML = presupMes.map(p => {
+    const gastado = egresos.filter(t => t.categoria === p.categoria).reduce((s,t) => {
+      const tc = t.moneda === '₡' ? 1 : (getTc(simboloACodigoTc(t.moneda), t.fecha, 'venta') ?? 0);
+      return s + t.monto * tc;
+    }, 0);
+    const pct = Math.min(Math.round(gastado / p.monto * 100), 100);
+    const color = pct >= 100 ? '#dc2626' : pct >= 80 ? '#f59e0b' : '#10b981';
+    return `<div style="margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-size:14px; font-weight:600;">${p.categoria}</span>
+        <span style="font-size:13px; color:#888;">${fmt(p.monto, '₡')} presupuestado</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:#888; margin-bottom:4px;">
+        <span>${fmt(gastado, '₡')} gastado</span>
+        <span>${pct}%</span>
+      </div>
+      <div style="background:#f3f4f6; border-radius:99px; height:8px;">
+        <div style="width:${pct}%; background:${color}; border-radius:99px; height:8px; transition:width 0.3s;"></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // Desregistrar service workers viejos
