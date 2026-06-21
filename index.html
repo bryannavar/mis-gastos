@@ -541,14 +541,20 @@ function renderTcHistorial() {
 }
 
 function formatMonto(input) {
-  let raw = input.value.replace(/[^0-9]/g, '');
-  if(!raw) { input.value = ''; return; }
-  input.value = parseInt(raw).toLocaleString('es-CR');
+  const moneda = document.getElementById('inp-moneda').value;
+  if(moneda === '$') {
+    input.value = input.value.replace(/[^0-9.]/g, '');
+  } else {
+    let raw = input.value.replace(/[^0-9]/g, '');
+    if(!raw) { input.value = ''; return; }
+    input.value = parseInt(raw).toLocaleString('es-CR');
+  }
 }
 
 function parseMonto() {
-  const raw = document.getElementById('inp-monto').value.replace(/[^0-9]/g, '');
-  return parseFloat(raw) || 0;
+  const moneda = document.getElementById('inp-moneda').value;
+  const raw = document.getElementById('inp-monto').value;
+  return moneda === '$' ? parseFloat(raw) || 0 : parseFloat(raw.replace(/[^0-9]/g, '')) || 0;
 }
 
 async function agregarTxn() {
@@ -818,37 +824,29 @@ async function guardarPresupuesto(categoria, input) {
   renderPresupuesto();
 }
 
-function renderHistorial() {
-  const mes = document.getElementById('sel-mes') ? document.getElementById('sel-mes').value || mesActual() : mesActual();
-  const d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
-  const list = document.getElementById('historial-list');
-  list.innerHTML = d.length ? d.map(t=>txnHTML(t)).join('') : '<div class="empty"><i class="ti ti-calendar"></i>Sin transacciones este mes</div>';
-
-  // Presupuesto del mes
+// Presupuesto del mes
   const egresos = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
   const presupMes = allPresupuestos.filter(p => p.mes === mes);
   const hpEl = document.getElementById('historial-presupuesto');
   if(!hpEl) return;
-
   if(!presupMes.length) {
     hpEl.innerHTML = '<div class="empty">Sin presupuesto definido para este mes</div>';
     return;
   }
-
   hpEl.innerHTML = presupMes.map(p => {
-    const gastado = egresos.filter(t => t.categoria === p.categoria).reduce((s,t) => {
-      const tc = t.moneda === '₡' ? 1 : (getTc(simboloACodigoTc(t.moneda), t.fecha, 'venta') ?? 0);
-      return s + t.monto * tc;
-    }, 0);
+    const moneda = p.moneda || '₡';
+    const gastado = egresos
+      .filter(t => t.categoria === p.categoria && t.moneda === moneda)
+      .reduce((s,t) => s + t.monto, 0);
     const pct = Math.min(Math.round(gastado / p.monto * 100), 100);
     const color = pct >= 100 ? '#dc2626' : pct >= 80 ? '#f59e0b' : '#10b981';
     return `<div style="margin-bottom:20px;">
       <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
         <span style="font-size:14px; font-weight:600;">${p.categoria}</span>
-        <span style="font-size:13px; color:#888;">${fmt(p.monto, '₡')} presupuestado</span>
+        <span style="font-size:13px; color:#888;">${fmt(p.monto, moneda)} presupuestado</span>
       </div>
       <div style="display:flex; justify-content:space-between; font-size:11px; color:#888; margin-bottom:4px;">
-        <span>${fmt(gastado, '₡')} gastado</span>
+        <span>${fmt(gastado, moneda)} gastado</span>
         <span>${pct}%</span>
       </div>
       <div style="background:#f3f4f6; border-radius:99px; height:8px;">
@@ -856,7 +854,6 @@ function renderHistorial() {
       </div>
     </div>`;
   }).join('');
-}
 
 // Desregistrar service workers viejos
 if('serviceWorker' in navigator) {
