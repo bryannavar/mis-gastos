@@ -173,30 +173,32 @@
       <button class="tab active" onclick="showTab('dashboard')"><i class="ti ti-home"></i> Inicio</button>
       <button class="tab" onclick="showTab('agregar')"><i class="ti ti-plus"></i> Agregar</button>
       <button class="tab" onclick="showTab('historial')"><i class="ti ti-list"></i> Historial</button>
-      <button class="tab" onclick="showTab('configuracion')"><i class="ti ti-settings"></i> Config</button>
     </div>
   </div>
 
   <!-- DASHBOARD -->
   <div class="content" id="tab-dashboard">
-    <div id="tc-warning" style="display:none; background:#fef3c7; border:1px solid #f59e0b; border-radius:10px; padding:12px 16px; margin-bottom:14px; font-size:13px; color:#92400e;"></div>
+    <div class="moneda-toggle">
+      <button class="moneda-btn active" id="mbtn-colon" onclick="setMoneda('₡')">₡ Colones</button>
+      <button class="moneda-btn" id="mbtn-dolar" onclick="setMoneda('$')">$ Dólares</button>
+    </div>
     <div class="saldo-card">
-      <div class="saldo-label">Saldo consolidado del mes (en ₡)</div>
-      <div class="saldo-monto" id="saldo-consolidado">₡0</div>
+      <div class="saldo-label">Saldo del mes</div>
+      <div class="saldo-monto" id="saldo-main">₡0</div>
       <div class="saldo-mes" id="saldo-mes-label"></div>
     </div>
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-label"><i class="ti ti-arrow-up" style="color:#16a34a"></i> Ingresos (₡)</div>
-        <div class="stat-val ingreso" id="total-ingresos">₡0</div>
+        <div class="stat-label"><i class="ti ti-arrow-up" style="color:#16a34a"></i> Ingresos</div>
+        <div class="stat-val ingreso" id="total-ingresos">0</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label"><i class="ti ti-arrow-down" style="color:#dc2626"></i> Egresos (₡)</div>
-        <div class="stat-val egreso" id="total-egresos">₡0</div>
+        <div class="stat-label"><i class="ti ti-arrow-down" style="color:#dc2626"></i> Egresos</div>
+        <div class="stat-val egreso" id="total-egresos">0</div>
       </div>
     </div>
-    <div class="stats-grid" id="stats-otras-monedas"></div>
-    <div class="section-title">Egresos por categoría (en ₡)</div>
+    <div class="section-title">Egresos por categoría</div>
+    <div id="bars-categorias" style="display:none"></div>
     <div style="padding: 8px 0 16px; position:relative; height:220px;">
       <canvas id="chart-categorias"></canvas>
     </div>
@@ -247,8 +249,12 @@
 
   <!-- HISTORIAL -->
   <div class="content" id="tab-historial" style="display:none">
-    <div style="margin-bottom:14px">
-      <select id="sel-mes" onchange="renderHistorial()" style="width:100%;"></select>
+    <div class="form-row" style="margin-bottom:14px">
+      <select id="sel-mes" onchange="renderHistorial()"></select>
+      <select id="sel-moneda-hist" onchange="renderHistorial()">
+        <option value="₡">₡ Colones</option>
+        <option value="$">$ Dólares</option>
+      </select>
     </div>
     <div id="historial-list"></div>
   </div>
@@ -256,34 +262,6 @@
   <div style="text-align:center; padding: 20px 16px; border-top: 0.5px solid #e8e8e8; margin-top: 8px;">
     <p style="font-size: 13px; color: #555; margin-bottom: 4px;">🔒 Tu información es 100% privada y confidencial</p>
     <p style="font-size: 11px; color: #bbb;">Desarrollado por <span style="color:#888; font-weight:500;">Bryan Navarro Jiménez</span> · © 2026 mipresupuestocr.com</p>
-  </div>
-
-  <!-- CONFIGURACION -->
-  <div class="content" id="tab-configuracion" style="display:none">
-    <div class="section-title">Tipo de cambio</div>
-    <p style="font-size:13px; color:#888; margin-bottom:16px;">Ingresá el tipo de cambio para convertir otras monedas a colones en el saldo consolidado.</p>
-    <div class="form-group">
-      <label class="form-label">Moneda</label>
-      <select id="tc-moneda">
-        <option value="USD">$ Dólares (USD)</option>
-        <option value="EUR">€ Euros (EUR)</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Valor en colones (₡)</label>
-      <input type="text" id="tc-valor" placeholder="ej: 520.50" inputmode="decimal">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Fecha</label>
-      <input type="date" id="tc-fecha">
-    </div>
-    <button class="btn-guardar" onclick="guardarTipoCambio()">
-      <i class="ti ti-check"></i> Guardar tipo de cambio
-    </button>
-    <div class="msg-ok" id="msg-ok-tc" style="display:none; text-align:center; margin-top:12px; color:#16a34a; font-size:14px;"><i class="ti ti-circle-check"></i> ¡Guardado!</div>
-    <div id="msg-err-tc" style="display:none; text-align:center; margin-top:12px; color:#dc2626; font-size:14px;"></div>
-    <div class="section-title" style="margin-top:24px;">Historial de tipos de cambio</div>
-    <div id="tc-historial"></div>
   </div>
 
 </div>
@@ -297,8 +275,8 @@ const CATS_EGRESO = ['Alimentación','Servicios','Deudas','Transporte','Salud','
 const CATS_INGRESO = ['Salario','Otros ingresos'];
 
 let tipoActual = 'ingreso';
+let monedaActual = '₡';
 let allTxn = [];
-let allTc = []; // tipos de cambio
 
 function fmt(n, moneda) {
   const num = Math.abs(Math.round(n)).toLocaleString('es-CR');
@@ -371,41 +349,33 @@ function showLogin() {
   document.getElementById('screen-login').style.display = 'flex';
 }
 
-let appIniciada = false;
-
-async function entrarApp() {
-  if(appIniciada) return;
-  appIniciada = true;
-  showApp();
-  await Promise.all([loadTxn(), loadTc()]);
-  refreshAll();
-}
+let appReady = false;
 
 async function initApp() {
-  // Limpiar el hash de la URL si viene de un redirect OAuth
-  if(window.location.hash && window.location.hash.includes('access_token')) {
-    // Supabase procesa el hash automáticamente, limpiamos la URL
-    history.replaceState(null, '', window.location.pathname);
-  }
-
-  // Esperar a que Supabase procese la sesión (incluyendo tokens del hash)
-  const { data: { session } } = await sb.auth.getSession();
-  if(session) {
-    await entrarApp();
-  } else {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if(session) {
+      showApp();
+      await loadTxn();
+      renderDashboard();
+    } else {
+      showLogin();
+    }
+  } catch(e) {
     showLogin();
   }
+  appReady = true;
 }
 
-// Escuchar cambios de sesión (OAuth redirect, magic link, signout)
 sb.auth.onAuthStateChange(async (event, session) => {
-  if(event === 'SIGNED_IN' && session && !appIniciada) {
-    await entrarApp();
+  if(!appReady) return;
+  if(event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    showApp();
+    await loadTxn();
+    renderDashboard();
   } else if(event === 'SIGNED_OUT') {
-    appIniciada = false;
-    allTxn = [];
-    allTc = [];
     showLogin();
+    allTxn = [];
   }
 });
 
@@ -421,88 +391,6 @@ async function loadTxn() {
   if(!error && data) allTxn = data;
 }
 
-async function loadTc() {
-  const { data, error } = await sb.from('tipo_cambio').select('*').order('fecha', { ascending: false });
-  if(!error && data) allTc = data;
-}
-
-function getTc(moneda, fecha) {
-  // Busca el tipo de cambio más reciente para esa moneda hasta la fecha dada
-  const disponibles = allTc.filter(t => t.moneda === moneda && t.fecha <= fecha);
-  if(!disponibles.length) return null;
-  return disponibles[0].valor; // ya está ordenado desc por fecha
-}
-
-async function guardarTipoCambio() {
-  const moneda = document.getElementById('tc-moneda').value;
-  const valor = parseFloat(document.getElementById('tc-valor').value.replace(',', '.'));
-  const fecha = document.getElementById('tc-fecha').value;
-  const errEl = document.getElementById('msg-err-tc');
-
-  if(!valor || valor <= 0) { errEl.textContent = 'Ingresá un valor válido'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',2500); return; }
-  if(!fecha) { errEl.textContent = 'Ingresá una fecha'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',2500); return; }
-
-  // Verificar si ya existe para esa moneda y fecha
-  const existe = allTc.find(t => t.moneda === moneda && t.fecha === fecha);
-  if(existe) {
-    errEl.textContent = `Ya existe un tipo de cambio para ${moneda} el ${fecha}. Borralo primero si querés cambiarlo.`;
-    errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',4000);
-    return;
-  }
-
-  const { data: { user } } = await sb.auth.getUser();
-  const { data, error } = await sb.from('tipo_cambio').insert({
-    user_id: user.id,
-    moneda,
-    fecha,
-    valor
-  }).select().single();
-
-  if(error) {
-    errEl.textContent = 'Error: ' + error.message;
-    errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000);
-    return;
-  }
-
-  allTc.unshift(data);
-  allTc.sort((a,b) => b.fecha.localeCompare(a.fecha));
-  document.getElementById('tc-valor').value = '';
-  renderTcHistorial();
-  renderDashboard();
-  const ok = document.getElementById('msg-ok-tc');
-  ok.style.display = 'block';
-  setTimeout(() => ok.style.display = 'none', 2000);
-}
-
-function renderTcHistorial() {
-  const list = document.getElementById('tc-historial');
-  if(!allTc.length) {
-    list.innerHTML = '<div class="empty">Sin tipos de cambio registrados</div>';
-    return;
-  }
-  list.innerHTML = allTc.slice(0,15).map(t => `
-    <div class="txn-item">
-      <div class="txn-icon ingreso" style="font-size:13px; font-weight:600;">${t.moneda}</div>
-      <div class="txn-info">
-        <div class="txn-cat">${t.moneda === 'USD' ? '$ Dólares' : '€ Euros'}</div>
-        <div class="txn-fecha">${new Date(t.fecha+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'})}</div>
-      </div>
-      <div class="txn-right">
-        <div class="txn-monto ingreso">₡${t.valor.toLocaleString('es-CR')}</div>
-        <button class="delete-btn" onclick="deleteTipoCambio('${t.id}')"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>`).join('');
-}
-
-async function deleteTipoCambio(id) {
-  const { error } = await sb.from('tipo_cambio').delete().eq('id', id);
-  if(!error) {
-    allTc = allTc.filter(t => t.id !== id);
-    renderTcHistorial();
-    renderDashboard();
-  }
-}
-
 function formatMonto(input) {
   let raw = input.value.replace(/[^0-9]/g, '');
   if(!raw) { input.value = ''; return; }
@@ -516,12 +404,7 @@ function parseMonto() {
 
 async function agregarTxn() {
   const monto = parseMonto();
-  if(!monto || monto <= 0) {
-    const err = document.getElementById('msg-err');
-    err.textContent = 'Ingresá un monto válido'; err.style.display = 'block';
-    setTimeout(() => err.style.display = 'none', 2500);
-    return;
-  }
+  if(!monto || monto <= 0) { alert('Ingresá un monto válido'); return; }
   const btn = document.getElementById('btn-guardar');
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> Guardando...';
 
@@ -555,41 +438,42 @@ async function agregarTxn() {
   document.getElementById('inp-monto').value = '';
   document.getElementById('inp-nota').value = '';
   document.getElementById('msg-err').style.display = 'none';
-  refreshAll();
   const ok = document.getElementById('msg-ok');
-  ok.style.display = 'block';
-  setTimeout(() => {
-    ok.style.display = 'none';
-    showTab('dashboard');
-  }, 1500);
-}
-
-async function deleteTxn(id) {
-  const { error } = await sb.from('transacciones').delete().eq('id', id);
-  if(!error) {
-    allTxn = allTxn.filter(t => t.id !== id);
-    refreshAll();
+  ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 2500);
+  renderDashboard();
+  if(document.getElementById('tab-historial').style.display !== 'none') {
+    populateMesSelector(); renderHistorial();
   }
 }
 
-function refreshAll() {
-  renderDashboard();
-  if(document.getElementById('sel-mes')) {
-    populateMesSelector();
-    renderHistorial();
+async function deleteTxn(id) {
+  if(!confirm('¿Eliminar esta transacción?')) return;
+  const { error } = await sb.from('transacciones').delete().eq('id', id);
+  if(!error) {
+    allTxn = allTxn.filter(t => t.id !== id);
+    renderDashboard();
+    if(document.getElementById('tab-historial').style.display !== 'none') {
+      populateMesSelector(); renderHistorial();
+    }
   }
 }
 
 // UI
+function setMoneda(m) {
+  monedaActual = m;
+  document.getElementById('mbtn-colon').classList.toggle('active', m === '₡');
+  document.getElementById('mbtn-dolar').classList.toggle('active', m === '$');
+  renderDashboard();
+}
+
 function showTab(t) {
-  ['dashboard','agregar','historial','configuracion'].forEach(x => {
+  ['dashboard','agregar','historial'].forEach(x => {
     document.getElementById('tab-'+x).style.display = x===t ? '' : 'none';
   });
   document.querySelectorAll('.tab').forEach((el,i) => {
-    el.classList.toggle('active', ['dashboard','agregar','historial','configuracion'][i]===t);
+    el.classList.toggle('active', ['dashboard','agregar','historial'][i]===t);
   });
   if(t==='historial') { populateMesSelector(); renderHistorial(); }
-  if(t==='configuracion') { renderTcHistorial(); document.getElementById('tc-fecha').value = new Date().toISOString().slice(0,10); }
 }
 
 function selectTipo(tipo) {
@@ -618,99 +502,28 @@ function txnHTML(t) {
   </div>`;
 }
 
-function monedaACodigoTc(simbolo) {
-  if(simbolo === '$') return 'USD';
-  if(simbolo === '€') return 'EUR';
-  return null;
-}
-
-function aColones(monto, simbolo, fechaRef) {
-  // Convierte un monto de cualquier moneda a colones. Devuelve {valor, faltaTc}
-  if(simbolo === '₡') return { valor: monto, faltaTc: false };
-  const codigo = monedaACodigoTc(simbolo);
-  const tc = getTc(codigo, fechaRef);
-  if(tc && tc > 0) return { valor: monto * tc, faltaTc: false };
-  return { valor: 0, faltaTc: true };
-}
-
 function renderDashboard() {
   const mes = mesActual();
-  const finMes = mes + '-31';
-  const delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
+  const d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.moneda === monedaActual);
+  const ingresos = d.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const egresos = d.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
+  const saldo = ingresos - egresos;
 
-  // --- Totales en colones nativos ---
-  const colones = delMes.filter(t => t.moneda === '₡');
-  const ingresosCol = colones.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-  const egresosCol = colones.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
-
+  const sm = document.getElementById('saldo-main');
+  sm.textContent = fmt(saldo, monedaActual);
+  sm.className = 'saldo-monto ' + (saldo>=0?'positivo':'negativo');
   document.getElementById('saldo-mes-label').textContent = mesLabel(mes);
-  document.getElementById('total-ingresos').textContent = fmt(ingresosCol, '₡');
-  document.getElementById('total-egresos').textContent = fmt(egresosCol, '₡');
+  document.getElementById('total-ingresos').textContent = fmt(ingresos, monedaActual);
+  document.getElementById('total-egresos').textContent = fmt(egresos, monedaActual);
 
-  // --- Consolidado en colones ---
-  let consolidado = ingresosCol - egresosCol;
-  let faltaTc = false;
-  const otrasMonedas = [...new Set(delMes.filter(t => t.moneda !== '₡').map(t => t.moneda))];
-  let statsOtrasHTML = '';
-
-  otrasMonedas.forEach(simbolo => {
-    const txnMoneda = delMes.filter(t => t.moneda === simbolo);
-    const ingM = txnMoneda.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-    const egM = txnMoneda.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
-    const saldoM = ingM - egM;
-    const conv = aColones(saldoM, simbolo, finMes);
-    consolidado += conv.valor;
-
-    let badge;
-    if(conv.faltaTc) {
-      faltaTc = true;
-      badge = '<span style="font-size:10px; color:#dc2626;">⚠ sin tipo de cambio</span>';
-    } else {
-      const codigo = monedaACodigoTc(simbolo);
-      const tc = getTc(codigo, finMes);
-      badge = `<span style="font-size:10px; color:#10b981;">× ₡${tc.toLocaleString('es-CR')}</span>`;
-    }
-
-    statsOtrasHTML += `
-      <div class="stat-card">
-        <div class="stat-label">${simbolo} Saldo ${badge}</div>
-        <div class="stat-val" style="color:#374151;">${fmt(saldoM, simbolo)}</div>
-        <div style="font-size:11px; color:#888; margin-top:2px;">= ${fmt(conv.valor, '₡')}</div>
-      </div>`;
-  });
-
-  document.getElementById('stats-otras-monedas').innerHTML = statsOtrasHTML;
-
-  const sc = document.getElementById('saldo-consolidado');
-  sc.textContent = fmt(consolidado, '₡');
-  sc.className = 'saldo-monto ' + (consolidado>=0?'positivo':'negativo');
-
-  // --- Advertencia tipo de cambio ---
-  const warnEl = document.getElementById('tc-warning');
-  if(faltaTc) {
-    warnEl.innerHTML = '⚠ Hay transacciones en otra moneda sin tipo de cambio. Se cuentan como ₡0 en el consolidado. Definí el tipo de cambio en la pestaña Config.';
-    warnEl.style.display = 'block';
-  } else {
-    warnEl.style.display = 'none';
-  }
-
-  // --- Gráfico de egresos por categoría (todo convertido a colones) ---
   const egxcat = {};
-  delMes.filter(t=>t.tipo==='egreso').forEach(t => {
-    const conv = aColones(t.monto, t.moneda, finMes);
-    egxcat[t.categoria] = (egxcat[t.categoria]||0) + conv.valor;
-  });
+  d.filter(t=>t.tipo==='egreso').forEach(t=>{ egxcat[t.categoria]=(egxcat[t.categoria]||0)+t.monto; });
 
-  const chartWrap = document.getElementById('chart-categorias').parentElement;
-  const valores = Object.values(egxcat).filter(v => v > 0);
-  if(!valores.length) {
-    chartWrap.innerHTML = '<div class="empty"><i class="ti ti-chart-bar"></i>Sin egresos este mes</div>';
+  const chartCanvas = document.getElementById('chart-categorias');
+  if(!Object.keys(egxcat).length) {
+    chartCanvas.parentElement.innerHTML = '<div class="empty"><i class="ti ti-chart-bar"></i>Sin egresos este mes</div>';
   } else {
-    if(!document.getElementById('chart-categorias')) {
-      chartWrap.innerHTML = '<canvas id="chart-categorias"></canvas>';
-    }
-    const chartCanvas = document.getElementById('chart-categorias');
-    const sorted = Object.entries(egxcat).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+    const sorted = Object.entries(egxcat).sort((a,b)=>b[1]-a[1]);
     const labels = sorted.map(([cat]) => cat);
     const values = sorted.map(([,val]) => Math.round(val));
     const colors = ['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16'];
@@ -718,30 +531,50 @@ function renderDashboard() {
     if(window._presupuestoChart) window._presupuestoChart.destroy();
     window._presupuestoChart = new Chart(chartCanvas, {
       type: 'doughnut',
-      data: { labels, datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderWidth: 0, hoverOffset: 8 }] },
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors.slice(0, labels.length),
+          borderWidth: 0,
+          hoverOffset: 8
+        }]
+      },
       options: {
-        responsive: true, maintainAspectRatio: false,
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: {
             position: 'right',
             labels: {
               font: { size: 12, family: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif' },
-              padding: 12, boxWidth: 12, boxHeight: 12,
-              generateLabels: (chart) => chart.data.labels.map((label, i) => ({
-                text: `${label}: ${fmt(chart.data.datasets[0].data[i], '₡')}`,
-                fillStyle: colors[i], strokeStyle: colors[i], lineWidth: 0, index: i
-              }))
+              padding: 12,
+              boxWidth: 12,
+              boxHeight: 12,
+              generateLabels: (chart) => {
+                const data = chart.data;
+                return data.labels.map((label, i) => ({
+                  text: `${label}: ${fmt(data.datasets[0].data[i], monedaActual)}`,
+                  fillStyle: colors[i],
+                  strokeStyle: colors[i],
+                  lineWidth: 0,
+                  index: i
+                }));
+              }
             }
           },
-          tooltip: { callbacks: { label: (ctx) => ` ${fmt(ctx.raw, '₡')}` } }
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` ${fmt(ctx.raw, monedaActual)}`
+            }
+          }
         },
         cutout: '65%'
       }
     });
   }
 
-  // --- Últimas transacciones (TODAS las monedas juntas) ---
-  const recientes = allTxn.slice(0,8);
+  const recientes = allTxn.slice(0,5);
   const ult = document.getElementById('ultimas-txn');
   ult.innerHTML = recientes.length ? recientes.map(t=>txnHTML(t)).join('') : '<div class="empty"><i class="ti ti-receipt"></i>Sin transacciones aún</div>';
 }
@@ -755,8 +588,9 @@ function populateMesSelector() {
 }
 
 function renderHistorial() {
-  const mes = document.getElementById('sel-mes') ? (document.getElementById('sel-mes').value || mesActual()) : mesActual();
-  const d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
+  const mes = document.getElementById('sel-mes') ? document.getElementById('sel-mes').value || mesActual() : mesActual();
+  const moneda = document.getElementById('sel-moneda-hist').value;
+  const d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.moneda === moneda);
   const list = document.getElementById('historial-list');
   list.innerHTML = d.length ? d.map(t=>txnHTML(t)).join('') : '<div class="empty"><i class="ti ti-calendar"></i>Sin transacciones este mes</div>';
 }
