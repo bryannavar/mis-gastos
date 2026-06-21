@@ -267,8 +267,12 @@
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">Valor en colones (₡)</label>
-      <input type="number" id="tc-valor" placeholder="ej: 520" min="1" step="0.01">
+      <label class="form-label">Valor en colones Venta (₡)</label>
+      <input type="number" id="tc-valorVenta" placeholder="ej: 520" min="1" step="0.01">
+    </div>
+	<div class="form-group">
+      <label class="form-label">Valor en colones Compra (₡)</label>
+      <input type="number" id="tc-valorCompra" placeholder="ej: 520" min="1" step="0.01">
     </div>
     <div class="form-group">
       <label class="form-label">Fecha</label>
@@ -417,20 +421,31 @@ async function loadTc() {
 }
 
 function getTc(codigoMoneda, fechaRef) {
-  const disponibles = allTc.filter(t => t.moneda === codigoMoneda && t.fecha <= fechaRef);
-  if(!disponibles.length) return null;
-  return disponibles[0].valor;
+  const disponibles = allTc.filter(
+    t => t.moneda === codigoMoneda && t.fecha <= fechaRef
+  );
+
+  if (!disponibles.length) return null;
+
+  return {
+    compra: disponibles[0].valorCompra,
+    venta: disponibles[0].valorVenta
+  };
 }
 
 async function guardarTipoCambio() {
   const moneda = document.getElementById('tc-moneda').value;
-  const valor = parseFloat(document.getElementById('tc-valor').value);
+  const valorcompra = parseFloat(document.getElementById('tc-valorCompra').value);
+  const valorventa = parseFloat(document.getElementById('tc-valorVenta').value);
   const fecha = document.getElementById('tc-fecha').value;
   const errEl = document.getElementById('msg-err-tc');
 
-  if(!valor || valor <= 0) { errEl.textContent = 'Ingresá un valor válido'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+  if(!valorcompra || valorcompra <= 0) { errEl.textContent = 'Ingresá un valor válido para compra'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
   if(!fecha) { errEl.textContent = 'Ingresá una fecha'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
 
+  if(!valorventa || valorventa <= 0) { errEl.textContent = 'Ingresá un valor válido para venta'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+  if(!fecha) { errEl.textContent = 'Ingresá una fecha'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+  
   const existe = allTc.find(t => t.moneda === moneda && t.fecha === fecha);
   if(existe) {
     errEl.textContent = `Ya existe un tipo de cambio para ${moneda} el ${fecha}. Borralo primero.`;
@@ -449,7 +464,8 @@ async function guardarTipoCambio() {
 
   allTc.unshift(data);
   allTc.sort((a,b) => b.fecha.localeCompare(a.fecha));
-  document.getElementById('tc-valor').value = '';
+  document.getElementById('tc-valorCompra').value = '';
+  document.getElementById('tc-valorVenta').value = '';
   renderTcHistorial();
   renderDashboard();
   const ok = document.getElementById('msg-ok-tc');
