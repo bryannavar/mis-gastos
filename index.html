@@ -371,30 +371,24 @@ function showLogin() {
   document.getElementById('screen-login').style.display = 'flex';
 }
 
-let cargandoDatos = false;
+let appIniciada = false;
 
 async function entrarApp() {
-  if(cargandoDatos) return;
-  cargandoDatos = true;
+  if(appIniciada) return;
+  appIniciada = true;
   showApp();
   await Promise.all([loadTxn(), loadTc()]);
   refreshAll();
-  cargandoDatos = false;
 }
 
-// Un solo punto de control: el estado de auth decide qué mostrar
-sb.auth.onAuthStateChange(async (event, session) => {
-  if(session) {
-    await entrarApp();
-  } else {
-    showLogin();
-    allTxn = [];
-    allTc = [];
-  }
-});
-
-// Verificación inicial al cargar (por si onAuthStateChange no dispara INITIAL_SESSION)
 async function initApp() {
+  // Limpiar el hash de la URL si viene de un redirect OAuth
+  if(window.location.hash && window.location.hash.includes('access_token')) {
+    // Supabase procesa el hash automáticamente, limpiamos la URL
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  // Esperar a que Supabase procese la sesión (incluyendo tokens del hash)
   const { data: { session } } = await sb.auth.getSession();
   if(session) {
     await entrarApp();
@@ -402,6 +396,18 @@ async function initApp() {
     showLogin();
   }
 }
+
+// Escuchar cambios de sesión (OAuth redirect, magic link, signout)
+sb.auth.onAuthStateChange(async (event, session) => {
+  if(event === 'SIGNED_IN' && session && !appIniciada) {
+    await entrarApp();
+  } else if(event === 'SIGNED_OUT') {
+    appIniciada = false;
+    allTxn = [];
+    allTc = [];
+    showLogin();
+  }
+});
 
 if(document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp);
