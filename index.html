@@ -442,6 +442,11 @@ async function guardarTipoCambio() {
   if(!valorventa || valorventa <= 0) { errEl.textContent = 'Ingresá un valor válido para venta'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
   if(!fecha) { errEl.textContent = 'Ingresá una fecha'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
   
+  if(valorventa <= valorcompra) {
+    errEl.textContent = 'El valor de venta debe ser mayor al de compra';
+    errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return;
+  }
+  
   const existe = allTc.find(t => t.moneda === moneda && t.fecha === fecha);
   if(existe) {
     errEl.textContent = `Ya existe un tipo de cambio para ${moneda} el ${fecha}. Borralo primero.`;
