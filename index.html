@@ -612,57 +612,51 @@ function renderDashboard() {
   const dCol = delMes.filter(t => t.moneda === '₡');
   const ingresosCol = dCol.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
   const egresosCol = dCol.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
-  document.getElementById('total-ingresos').textContent = fmt(ingresosCol, '₡');
-  document.getElementById('total-egresos').textContent = fmt(egresosCol, '₡');
-  document.getElementById('saldo-mes-label').textContent = mesLabel(mes);
-
-  // Saldo del mes = solo colones nativos
-  const saldoColones = ingresosCol - egresosCol;
+  // Sumar otras monedas colonizadas a ingresos/egresos/saldo
+  let totalIngresos = ingresosCol;
+  let totalEgresos = egresosCol;
   let faltaTc = false;
   const otrasMonedas = [...new Set(delMes.filter(t=>t.moneda!=='₡').map(t=>t.moneda))];
-  let statsHTML = '';
 
   otrasMonedas.forEach(simbolo => {
     const txnM = delMes.filter(t=>t.moneda===simbolo);
     const ingM = txnM.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
     const egM = txnM.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
-    const saldoM = ingM - egM;
     const codigo = simboloACodigoTc(simbolo);
     const tc = getTc(codigo, finMes);
-    let badge = '';
-    let equiv = '';
     if(tc && tc > 0) {
-      badge = `<span style="font-size:10px;color:#10b981;">× ₡${tc.toLocaleString('es-CR')}</span>`;
-      equiv = `<div style="font-size:11px;color:#888;margin-top:2px;">≈ ${fmt(saldoM * tc, '₡')}</div>`;
+      totalIngresos += ingM * tc;
+      totalEgresos += egM * tc;
     } else {
       faltaTc = true;
-      badge = `<span style="font-size:10px;color:#dc2626;">⚠ sin TC en Config</span>`;
     }
-    statsHTML += `<div class="stat-card">
-      <div class="stat-label">${simbolo} Saldo ${badge}</div>
-      <div class="stat-val" style="color:#374151;">${fmt(saldoM, simbolo)}</div>
-      ${equiv}
-    </div>`;
   });
 
-  document.getElementById('stats-otras-monedas').innerHTML = statsHTML;
+  const saldoTotal = totalIngresos - totalEgresos;
+
+  document.getElementById('total-ingresos').textContent = fmt(totalIngresos, '₡');
+  document.getElementById('total-egresos').textContent = fmt(totalEgresos, '₡');
+  document.getElementById('saldo-mes-label').textContent = mesLabel(mes);
+  document.getElementById('stats-otras-monedas').innerHTML = '';
 
   const sm = document.getElementById('saldo-main');
-  sm.textContent = fmt(saldoColones, '₡');
-  sm.className = 'saldo-monto ' + (saldoColones>=0?'positivo':'negativo');
+  sm.textContent = fmt(saldoTotal, '₡');
+  sm.className = 'saldo-monto ' + (saldoTotal>=0?'positivo':'negativo');
 
   const warnEl = document.getElementById('tc-warning');
   if(faltaTc) {
-    warnEl.textContent = '⚠ Hay transacciones en otra moneda sin tipo de cambio definido. Definilo en Config para ver su equivalente en colones.';
+    warnEl.textContent = '⚠ Hay transacciones en otra moneda sin tipo de cambio definido. Definilo en Config para incluirlas en el total.';
     warnEl.style.display = 'block';
   } else {
     warnEl.style.display = 'none';
   }
 
-  // Egresos por categoría — solo colones por ahora
-  const d = dCol;
+  // Egresos por categoría — colonizados
   const egxcat = {};
-  d.filter(t=>t.tipo==='egreso').forEach(t=>{ egxcat[t.categoria]=(egxcat[t.categoria]||0)+t.monto; });
+  delMes.filter(t=>t.tipo==='egreso').forEach(t=>{
+    const tc = t.moneda === '₡' ? 1 : (getTc(simboloACodigoTc(t.moneda), finMes) || 0);
+    egxcat[t.categoria] = (egxcat[t.categoria]||0) + t.monto * tc;
+  });
   const maxVal = Math.max(...Object.values(egxcat), 1);
   const bars = document.getElementById('bars-categorias');
   if(!Object.keys(egxcat).length) {
