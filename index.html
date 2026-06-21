@@ -258,7 +258,7 @@
   <!-- CONFIGURACION -->
   <div class="content" id="tab-configuracion" style="display:none">
     <div class="section-title">Tipo de cambio</div>
-    <p style="font-size:13px; color:#888; margin-bottom:16px; line-height:1.6;">Ingresá el tipo de cambio diario. <b>Compra</b> aplica a ingresos, <b>Venta</b> a egresos.</p>
+    <p style="font-size:13px; color:#888; margin-bottom:16px; line-height:1.6;">Ingresá el tipo de cambio para convertir otras monedas a colones. Solo un registro por moneda por día.</p>
     <div class="form-group">
       <label class="form-label">Moneda</label>
       <select id="tc-moneda">
@@ -266,15 +266,13 @@
         <option value="EUR">€ Euros (EUR)</option>
       </select>
     </div>
-    <div class="form-row" style="gap:12px; margin-bottom:12px;">
-      <div class="form-group" style="flex:1; margin-bottom:0;">
-        <label class="form-label">Compra (₡) — ingresos</label>
-        <input type="number" id="tc-compra" placeholder="ej: 510" min="1" step="0.01">
-      </div>
-      <div class="form-group" style="flex:1; margin-bottom:0;">
-        <label class="form-label">Venta (₡) — egresos</label>
-        <input type="number" id="tc-venta" placeholder="ej: 520" min="1" step="0.01">
-      </div>
+    <div class="form-group">
+      <label class="form-label">Valor en colones Venta (₡)</label>
+      <input type="number" id="tc-valorVenta" placeholder="ej: 520" min="1" step="0.01">
+    </div>
+	<div class="form-group">
+      <label class="form-label">Valor en colones Compra (₡)</label>
+      <input type="number" id="tc-valorCompra" placeholder="ej: 520" min="1" step="0.01">
     </div>
     <div class="form-group">
       <label class="form-label">Fecha</label>
@@ -422,23 +420,32 @@ async function loadTc() {
   if(!error && data) allTc = data;
 }
 
-function getTc(codigoMoneda, fechaRef, tipo = 'venta') {
-  const disponibles = allTc.filter(t => t.moneda === codigoMoneda && t.fecha <= fechaRef);
-  if(!disponibles.length) return null;
-  const row = disponibles[0];
-  return tipo === 'compra' ? (row.valorCompra || row.valorVenta) : (row.valorVenta || row.valorCompra);
+function getTc(codigoMoneda, fechaRef) {
+  const disponibles = allTc.filter(
+    t => t.moneda === codigoMoneda && t.fecha <= fechaRef
+  );
+
+  if (!disponibles.length) return null;
+
+  return {
+    compra: disponibles[0].valorCompra,
+    venta: disponibles[0].valorVenta
+  };
 }
 
 async function guardarTipoCambio() {
   const moneda = document.getElementById('tc-moneda').value;
-  const valorCompra = parseFloat(document.getElementById('tc-compra').value);
-  const valorVenta = parseFloat(document.getElementById('tc-venta').value);
+  const valorcompra = parseFloat(document.getElementById('tc-valorCompra').value);
+  const valorventa = parseFloat(document.getElementById('tc-valorVenta').value);
   const fecha = document.getElementById('tc-fecha').value;
   const errEl = document.getElementById('msg-err-tc');
 
-  if(!valorCompra || valorCompra <= 0 || !valorVenta || valorVenta <= 0) { errEl.textContent = 'Ingresá valores válidos para compra y venta'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+  if(!valorcompra || valorcompra <= 0) { errEl.textContent = 'Ingresá un valor válido para compra'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
   if(!fecha) { errEl.textContent = 'Ingresá una fecha'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
 
+  if(!valorventa || valorventa <= 0) { errEl.textContent = 'Ingresá un valor válido para venta'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+  if(!fecha) { errEl.textContent = 'Ingresá una fecha'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+  
   const existe = allTc.find(t => t.moneda === moneda && t.fecha === fecha);
   if(existe) {
     errEl.textContent = `Ya existe un tipo de cambio para ${moneda} el ${fecha}. Borralo primero.`;
@@ -447,7 +454,16 @@ async function guardarTipoCambio() {
   }
 
   const { data: { user } } = await sb.auth.getUser();
-  const { data, error } = await sb.from('tipo_cambio').insert({ user_id: user.id, moneda, fecha, valorCompra, valorVenta }).select().single();
+  const { data, error } = await sb.from('tipo_cambio')
+  .insert({
+    user_id: user.id,
+    moneda,
+    fecha,
+    valorCompra: valorcompra,
+    valorVenta: valorventa
+  })
+  .select()
+  .single();
 
   if(error) {
     errEl.textContent = 'Error: ' + error.message;
@@ -457,8 +473,8 @@ async function guardarTipoCambio() {
 
   allTc.unshift(data);
   allTc.sort((a,b) => b.fecha.localeCompare(a.fecha));
-  document.getElementById('tc-compra').value = '';
-  document.getElementById('tc-venta').value = '';
+  document.getElementById('tc-valorCompra').value = '';
+  document.getElementById('tc-valorVenta').value = '';
   renderTcHistorial();
   renderDashboard();
   const ok = document.getElementById('msg-ok-tc');
@@ -477,24 +493,30 @@ async function deleteTipoCambio(id) {
 function renderTcHistorial() {
   const list = document.getElementById('tc-historial');
   if(!list) return;
-  if(!allTc.length) { list.innerHTML = '<div class="empty">Sin registros aún</div>'; return; }
-  list.innerHTML = allTc.slice(0,20).map(t => {
-    const label = t.moneda === 'USD' ? '$ Dólares' : '€ Euros';
-    const fechaStr = new Date(t.fecha+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'});
-    const compraStr = t.valorCompra ? `₡${t.valorCompra.toLocaleString('es-CR')}` : '—';
-    const ventaStr = t.valorVenta ? `₡${t.valorVenta.toLocaleString('es-CR')}` : '—';
-    return `<div class="txn-item">
+
+  if(!allTc.length) {
+    list.innerHTML = '<div class="empty">Sin registros aún</div>';
+    return;
+  }
+
+  list.innerHTML = allTc.slice(0,20).map(t => `
+    <div class="txn-item">
       <div class="txn-icon ingreso" style="font-size:12px; font-weight:700;">${t.moneda}</div>
       <div class="txn-info">
-        <div class="txn-cat">${label}</div>
-        <div class="txn-fecha">${fechaStr}</div>
-        <div style="font-size:11px;color:#888;margin-top:2px;">Compra ${compraStr} · Venta ${ventaStr}</div>
+        <div class="txn-cat">${t.moneda === 'USD' ? '$ Dólares' : '€ Euros'}</div>
+        <div class="txn-fecha">${new Date(t.fecha+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'})}</div>
       </div>
       <div class="txn-right">
-        <button class="delete-btn" onclick="deleteTipoCambio('${t.id}')"><i class="ti ti-trash"></i></button>
+        <div class="txn-monto ingreso">
+          Compra: ₡${t.valorCompra.toLocaleString('es-CR')}<br>
+          Venta: ₡${t.valorVenta.toLocaleString('es-CR')}
+        </div>
+        <button class="delete-btn" onclick="deleteTipoCambio('${t.id}')">
+          <i class="ti ti-trash"></i>
+        </button>
       </div>
-    </div>`;
-  }).join('');
+    </div>`
+  ).join('');
 }
 
 function formatMonto(input) {
@@ -593,8 +615,7 @@ function txnHTML(t) {
   const signo = t.tipo==='egreso' ? '-' : '+';
   let equiv = '';
   if(t.moneda !== '₡') {
-    const tipoTc = t.tipo === 'ingreso' ? 'compra' : 'venta';
-    const tc = getTc(simboloACodigoTc(t.moneda), t.fecha, tipoTc);
+    const tc = getTc(simboloACodigoTc(t.moneda), t.fecha);
     if(tc && tc > 0) equiv = `<div style="font-size:11px;color:#999;margin-top:2px;">≈ ${signo} ${fmt(t.monto * tc, '₡')}</div>`;
   }
   return `<div class="txn-item">
@@ -638,11 +659,10 @@ function renderDashboard() {
     const ingM = txnM.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
     const egM = txnM.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
     const codigo = simboloACodigoTc(simbolo);
-    const tcCompra = getTc(codigo, finMes, 'compra');
-    const tcVenta = getTc(codigo, finMes, 'venta');
-    if(tcCompra || tcVenta) {
-      totalIngresos += ingM * (tcCompra || tcVenta);
-      totalEgresos += egM * (tcVenta || tcCompra);
+    const tc = getTc(codigo, finMes);
+    if(tc && tc > 0) {
+      totalIngresos += ingM * tc;
+      totalEgresos += egM * tc;
     } else {
       faltaTc = true;
     }
@@ -670,7 +690,7 @@ function renderDashboard() {
   // Egresos por categoría — colonizados
   const egxcat = {};
   delMes.filter(t=>t.tipo==='egreso').forEach(t=>{
-    const tc = t.moneda === '₡' ? 1 : (getTc(simboloACodigoTc(t.moneda), t.fecha, 'venta') ?? 0);
+    const tc = t.moneda === '₡' ? 1 : (getTc(simboloACodigoTc(t.moneda), finMes) || 0);
     egxcat[t.categoria] = (egxcat[t.categoria]||0) + t.monto * tc;
   });
   const maxVal = Math.max(...Object.values(egxcat), 1);
