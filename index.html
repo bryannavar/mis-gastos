@@ -244,11 +244,15 @@
   </div>
 
 <!-- PRESUPUESTO -->
-  <div class="content" id="tab-presupuesto" style="display:none">
-    <div class="section-title">Presupuesto del mes</div>
-    <p style="font-size:13px; color:#888; margin-bottom:16px; line-height:1.6;">Definí cuánto querés gastar por categoría este mes.</p>
-    <div id="presupuesto-list"></div>
+<div class="content" id="tab-presupuesto" style="display:none">
+  <div class="section-title">Presupuesto del mes</div>
+  <p style="font-size:13px; color:#888; margin-bottom:16px; line-height:1.6;">Definí cuánto querés gastar por categoría este mes.</p>
+  <div class="moneda-toggle" style="margin-bottom:20px;">
+    <button class="moneda-btn active" id="pbtn-colon" onclick="setMonedaPresupuesto('₡')">₡ Colones</button>
+    <button class="moneda-btn" id="pbtn-dolar" onclick="setMonedaPresupuesto('$')">$ Dólares</button>
   </div>
+  <div id="presupuesto-list"></div>
+</div>
 	
   <!-- HISTORIAL -->
   <div class="content" id="tab-historial" style="display:none">
@@ -740,18 +744,25 @@ function populateMesSelector() {
   sel.innerHTML = meses.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${mesLabel(m)}</option>`).join('');
 }
 
+let monedaPresupuesto = '₡';
+
+function setMonedaPresupuesto(m) {
+  monedaPresupuesto = m;
+  document.getElementById('pbtn-colon').classList.toggle('active', m === '₡');
+  document.getElementById('pbtn-dolar').classList.toggle('active', m === '$');
+  renderPresupuesto();
+}
+
 function renderPresupuesto() {
   const mes = mesActual();
-  const delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
-  const list = document.getElementById('presupuesto-list');	
+  const moneda = monedaPresupuesto;
+  const delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso' && t.moneda === moneda);
+  const list = document.getElementById('presupuesto-list');
   if(!list) return;
 
   list.innerHTML = CATS_EGRESO.map(cat => {
-    const presup = allPresupuestos.find(p => p.categoria === cat && p.mes === mes);
-    const gastado = delMes.filter(t => t.categoria === cat).reduce((s,t) => {
-      const tc = t.moneda === '₡' ? 1 : (getTc(simboloACodigoTc(t.moneda), t.fecha, 'venta') ?? 0);
-      return s + t.monto * tc;
-    }, 0);
+    const presup = allPresupuestos.find(p => p.categoria === cat && p.mes === mes && p.moneda === moneda);
+    const gastado = delMes.filter(t => t.categoria === cat).reduce((s,t) => s + t.monto, 0);
     const limite = presup ? presup.monto : 0;
     const pct = limite > 0 ? Math.min(Math.round(gastado / limite * 100), 100) : 0;
     const color = pct >= 100 ? '#dc2626' : pct >= 80 ? '#f59e0b' : '#10b981';
@@ -759,8 +770,8 @@ function renderPresupuesto() {
     return `<div style="margin-bottom:20px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
         <span style="font-size:14px; font-weight:600;">${cat}</span>
-        <input type="text" 
-          value="${limite > 0 ? limite.toLocaleString('es-CR') : ''}" 
+        <input type="text"
+          value="${limite > 0 ? limite.toLocaleString('es-CR') : ''}"
           placeholder="Sin límite"
           inputmode="numeric"
           style="width:110px; text-align:right; border:1px solid #e5e7eb; border-radius:8px; padding:4px 8px; font-size:13px;"
@@ -769,7 +780,7 @@ function renderPresupuesto() {
       </div>
       ${limite > 0 ? `
         <div style="display:flex; justify-content:space-between; font-size:11px; color:#888; margin-bottom:4px;">
-          <span>${fmt(gastado, '₡')} gastado</span>
+          <span>${fmt(gastado, moneda)} gastado</span>
           <span>${pct}%</span>
         </div>
         <div style="background:#f3f4f6; border-radius:99px; height:8px;">
@@ -790,9 +801,10 @@ async function guardarPresupuesto(categoria, input) {
   const raw = input.value.replace(/[^0-9]/g, '');
   const monto = parseFloat(raw) || 0;
   const mes = mesActual();
+  const moneda = monedaPresupuesto;
   const { data: { user } } = await sb.auth.getUser();
 
-  const existe = allPresupuestos.find(p => p.categoria === categoria && p.mes === mes);
+  const existe = allPresupuestos.find(p => p.categoria === categoria && p.mes === mes && p.moneda === moneda);
   if(existe) {
     if(monto === 0) {
       await sb.from('presupuestos').delete().eq('id', existe.id);
@@ -802,7 +814,7 @@ async function guardarPresupuesto(categoria, input) {
       existe.monto = monto;
     }
   } else if(monto > 0) {
-    const { data, error } = await sb.from('presupuestos').insert({ user_id: user.id, categoria, monto, mes }).select().single();
+    const { data, error } = await sb.from('presupuestos').insert({ user_id: user.id, categoria, monto, mes, moneda }).select().single();
     if(!error && data) allPresupuestos.push(data);
   }
   renderPresupuesto();
