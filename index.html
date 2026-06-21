@@ -199,7 +199,7 @@
     </div>
     <div class="section-title">Egresos por categoría</div>
     <div id="bars-categorias" style="display:none"></div>
-    <div style="padding: 8px 0 16px; position:relative; height:220px;">
+    <div class="chart-wrap" style="padding: 8px 0 16px; position:relative; height:220px;">
       <canvas id="chart-categorias"></canvas>
     </div>
     <div class="section-title">Últimas transacciones</div>
@@ -519,9 +519,14 @@ function renderDashboard() {
   const egxcat = {};
   d.filter(t=>t.tipo==='egreso').forEach(t=>{ egxcat[t.categoria]=(egxcat[t.categoria]||0)+t.monto; });
 
-  const chartCanvas = document.getElementById('chart-categorias');
+  let chartCanvas = document.getElementById('chart-categorias');
+  // Si el canvas fue destruido, lo recreamos
+  if(!chartCanvas) {
+    const wrap = document.querySelector('#tab-dashboard .chart-wrap');
+    if(wrap) { wrap.innerHTML = '<canvas id="chart-categorias"></canvas>'; chartCanvas = document.getElementById('chart-categorias'); }
+  }
   if(!Object.keys(egxcat).length) {
-    chartCanvas.parentElement.innerHTML = '<div class="empty"><i class="ti ti-chart-bar"></i>Sin egresos este mes</div>';
+    if(chartCanvas) chartCanvas.parentElement.innerHTML = '<div class="empty"><i class="ti ti-chart-bar"></i>Sin egresos este mes</div>';
   } else {
     const sorted = Object.entries(egxcat).sort((a,b)=>b[1]-a[1]);
     const labels = sorted.map(([cat]) => cat);
