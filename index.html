@@ -178,13 +178,9 @@
 
   <!-- DASHBOARD -->
   <div class="content" id="tab-dashboard">
-    <div class="moneda-toggle">
-      <button class="moneda-btn active" id="mbtn-colon" onclick="setMoneda('₡')">₡ Colones</button>
-      <button class="moneda-btn" id="mbtn-dolar" onclick="setMoneda('$')">$ Dólares</button>
-    </div>
     <div id="tc-warning" style="display:none; background:#fef3c7; border:1px solid #f59e0b; border-radius:10px; padding:12px 16px; margin-bottom:14px; font-size:13px; color:#92400e; line-height:1.5;"></div>
     <div class="saldo-card">
-      <div class="saldo-label">Saldo consolidado del mes (₡)</div>
+      <div class="saldo-label">Saldo del mes (₡)</div>
       <div class="saldo-monto" id="saldo-main">₡0</div>
       <div class="saldo-mes" id="saldo-mes-label"></div>
     </div>
@@ -250,10 +246,6 @@
   <div class="content" id="tab-historial" style="display:none">
     <div class="form-row" style="margin-bottom:14px">
       <select id="sel-mes" onchange="renderHistorial()"></select>
-      <select id="sel-moneda-hist" onchange="renderHistorial()">
-        <option value="₡">₡ Colones</option>
-        <option value="$">$ Dólares</option>
-      </select>
     </div>
     <div id="historial-list"></div>
   </div>
@@ -559,13 +551,6 @@ async function deleteTxn(id) {
 }
 
 // UI
-function setMoneda(m) {
-  monedaActual = m;
-  document.getElementById('mbtn-colon').classList.toggle('active', m === '₡');
-  document.getElementById('mbtn-dolar').classList.toggle('active', m === '$');
-  renderDashboard();
-}
-
 function showTab(t) {
   ['dashboard','agregar','historial','configuracion'].forEach(x => {
     document.getElementById('tab-'+x).style.display = x===t ? '' : 'none';
@@ -592,6 +577,11 @@ function txnHTML(t) {
   const icon = t.tipo==='ingreso' ? 'ti-arrow-up' : 'ti-arrow-down';
   const fecha = t.fecha ? new Date(t.fecha+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short'}) : '';
   const signo = t.tipo==='egreso' ? '-' : '+';
+  let equiv = '';
+  if(t.moneda !== '₡') {
+    const tc = getTc(simboloACodigoTc(t.moneda), t.fecha);
+    if(tc && tc > 0) equiv = `<div style="font-size:11px;color:#999;margin-top:2px;">≈ ${signo} ${fmt(t.monto * tc, '₡')}</div>`;
+  }
   return `<div class="txn-item">
     <div class="txn-icon ${t.tipo}"><i class="ti ${icon}"></i></div>
     <div class="txn-info">
@@ -601,6 +591,7 @@ function txnHTML(t) {
     </div>
     <div class="txn-right">
       <div class="txn-monto ${t.tipo}">${signo} ${fmt(t.monto, t.moneda)}</div>
+      ${equiv}
       <button class="delete-btn" onclick="deleteTxn('${t.id}')"><i class="ti ti-trash"></i></button>
     </div>
   </div>`;
@@ -625,8 +616,8 @@ function renderDashboard() {
   document.getElementById('total-egresos').textContent = fmt(egresosCol, '₡');
   document.getElementById('saldo-mes-label').textContent = mesLabel(mes);
 
-  // Consolidado
-  let consolidado = ingresosCol - egresosCol;
+  // Saldo del mes = solo colones nativos
+  const saldoColones = ingresosCol - egresosCol;
   let faltaTc = false;
   const otrasMonedas = [...new Set(delMes.filter(t=>t.moneda!=='₡').map(t=>t.moneda))];
   let statsHTML = '';
@@ -638,32 +629,31 @@ function renderDashboard() {
     const saldoM = ingM - egM;
     const codigo = simboloACodigoTc(simbolo);
     const tc = getTc(codigo, finMes);
-    let convertido = 0;
     let badge = '';
+    let equiv = '';
     if(tc && tc > 0) {
-      convertido = saldoM * tc;
       badge = `<span style="font-size:10px;color:#10b981;">× ₡${tc.toLocaleString('es-CR')}</span>`;
+      equiv = `<div style="font-size:11px;color:#888;margin-top:2px;">≈ ${fmt(saldoM * tc, '₡')}</div>`;
     } else {
       faltaTc = true;
       badge = `<span style="font-size:10px;color:#dc2626;">⚠ sin TC en Config</span>`;
     }
-    consolidado += convertido;
     statsHTML += `<div class="stat-card">
       <div class="stat-label">${simbolo} Saldo ${badge}</div>
       <div class="stat-val" style="color:#374151;">${fmt(saldoM, simbolo)}</div>
-      <div style="font-size:11px;color:#888;margin-top:2px;">= ${fmt(convertido, '₡')}</div>
+      ${equiv}
     </div>`;
   });
 
   document.getElementById('stats-otras-monedas').innerHTML = statsHTML;
 
   const sm = document.getElementById('saldo-main');
-  sm.textContent = fmt(consolidado, '₡');
-  sm.className = 'saldo-monto ' + (consolidado>=0?'positivo':'negativo');
+  sm.textContent = fmt(saldoColones, '₡');
+  sm.className = 'saldo-monto ' + (saldoColones>=0?'positivo':'negativo');
 
   const warnEl = document.getElementById('tc-warning');
   if(faltaTc) {
-    warnEl.textContent = '⚠ Hay transacciones en otra moneda sin tipo de cambio — se cuentan como ₡0. Definí el tipo de cambio en Config.';
+    warnEl.textContent = '⚠ Hay transacciones en otra moneda sin tipo de cambio definido. Definilo en Config para ver su equivalente en colones.';
     warnEl.style.display = 'block';
   } else {
     warnEl.style.display = 'none';
@@ -701,8 +691,7 @@ function populateMesSelector() {
 
 function renderHistorial() {
   const mes = document.getElementById('sel-mes') ? document.getElementById('sel-mes').value || mesActual() : mesActual();
-  const moneda = document.getElementById('sel-moneda-hist').value;
-  const d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.moneda === moneda);
+  const d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
   const list = document.getElementById('historial-list');
   list.innerHTML = d.length ? d.map(t=>txnHTML(t)).join('') : '<div class="empty"><i class="ti ti-calendar"></i>Sin transacciones este mes</div>';
 }
