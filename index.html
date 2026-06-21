@@ -420,10 +420,14 @@ async function loadTc() {
   if(!error && data) allTc = data;
 }
 
-function getTc(codigoMoneda, fechaRef) {
+function getTc(codigoMoneda, fechaRef, tipo = 'venta') {
   const disponibles = allTc.filter(
     t => t.moneda === codigoMoneda && t.fecha <= fechaRef
   );
+  if(!disponibles.length) return null;
+  const row = disponibles[0];
+  return tipo === 'compra' ? (row.valorCompra || row.valorVenta) : (row.valorVenta || row.valorCompra);
+}
 
   if (!disponibles.length) return null;
 
