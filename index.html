@@ -987,12 +987,12 @@ async function deleteTxn(id) {
 
 // UI
 function showTab(t) {
-  ['dashboard','agregar','fijos','presupuesto','historial','configuracion','nuevo-espacio','editar-espacio'].forEach(x => {
-    document.getElementById('tab-'+x).style.display = x===t ? '' : 'none';
-  });
-  document.querySelectorAll('.tab').forEach((el,i) => {
-    el.classList.toggle('active', ['dashboard','agregar','presupuesto','historial','configuracion'][i]===t);
-  });
+ ['dashboard','agregar','fijos','presupuesto','historial','configuracion'].forEach(x => {
+  document.getElementById('tab-'+x).style.display = x===t ? '' : 'none';
+});
+document.querySelectorAll('.tab').forEach((el,i) => {
+  el.classList.toggle('active', ['dashboard','agregar','fijos','presupuesto','historial','configuracion'][i]===t);
+});
   if(t==='historial') { populateMesSelector(); renderHistorial(); }
   if(t==='nuevo-espacio') { renderCatsNuevoEspacio(); }
   if(t==='editar-espacio') { renderEditarEspacio(); }
