@@ -1183,16 +1183,26 @@ function txnHTML(t) {
   const icon = t.tipo==='ingreso' ? 'ti-arrow-up' : 'ti-arrow-down';
   const fecha = t.fecha ? new Date(t.fecha+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short'}) : '';
   const signo = t.tipo==='egreso' ? '-' : '+';
+  const esFijo = t.nota && t.nota.startsWith('__fijo__');
+  const notaVisible = esFijo ? '' : t.nota;
+  
+  const monedaPrincipal = espacioActivo?.moneda || '₡';
   let equiv = '';
-  if(t.moneda !== '₡') {
-    const tc = getTc(simboloACodigoTc(t.moneda), t.fecha);
-    if(tc && tc > 0) equiv = `<div style="font-size:11px;color:#999;margin-top:2px;">≈ ${signo} ${fmt(t.monto * tc, '₡')}</div>`;
+  if(t.moneda !== monedaPrincipal) {
+    const tipoTc = t.tipo === 'ingreso' ? 'compra' : 'venta';
+    const monedaCodigo = allMonedas.find(m => m.simbolo === t.moneda)?.codigo;
+    const monedaNombre = allMonedas.find(m => m.simbolo === t.moneda)?.nombre || t.moneda;
+    const tc = monedaCodigo ? getTc(monedaCodigo, t.fecha, tipoTc) : null;
+    if(tc && tc > 0) {
+      equiv = `<div style="font-size:11px;color:#999;margin-top:2px;">≈ ${signo} ${fmt(t.monto * tc, monedaPrincipal)} <span style="color:#bbb;">(1 ${t.moneda} = ${fmt(tc, monedaPrincipal)})</span></div>`;
+    }
   }
+
   return `<div class="txn-item">
-    <div class="txn-icon ${t.tipo}"><i class="ti ${icon}"></i></div>
+    <div class="txn-icon ${t.tipo}">${esFijo ? '🔄' : `<i class="ti ${icon}"></i>`}</div>
     <div class="txn-info">
-      <div class="txn-cat">${t.categoria}</div>
-      ${t.nota ? `<div class="txn-nota">${t.nota}</div>` : ''}
+      <div class="txn-cat">${t.categoria}${esFijo ? ' <span style="font-size:10px;color:#888;background:#f3f4f6;padding:2px 6px;border-radius:10px;">Fijo</span>' : ''}</div>
+      ${notaVisible ? `<div class="txn-nota">${notaVisible}</div>` : ''}
       <div class="txn-fecha">${fecha}</div>
     </div>
     <div class="txn-right">
