@@ -1474,16 +1474,18 @@ function renderDashboard() {
   const mes = mesActual();
   const finMes = mes + '-31';
   const delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
+  const monedaPrincipal = espacioActivo?.moneda || '₡';
+  const monedaPrincipalCodigo = allMonedas.find(m => m.simbolo === monedaPrincipal)?.codigo || 'CRC';
 
-  // Colones nativos
-  const dCol = delMes.filter(t => t.moneda === '₡');
-  const ingresosCol = dCol.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-  const egresosCol = dCol.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
-  // Sumar otras monedas colonizadas a ingresos/egresos/saldo
-  let totalIngresos = ingresosCol;
-  let totalEgresos = egresosCol;
+  // Transacciones en moneda principal
+  const dPrincipal = delMes.filter(t => t.moneda === monedaPrincipal);
+  const ingresosPrincipal = dPrincipal.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const egresosPrincipal = dPrincipal.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
+
+  let totalIngresos = ingresosPrincipal;
+  let totalEgresos = egresosPrincipal;
   const fechasFaltantes = new Set();
-  const otrasMonedas = [...new Set(delMes.filter(t=>t.moneda!=='₡').map(t=>t.moneda))];
+  const otrasMonedas = [...new Set(delMes.filter(t=>t.moneda !== monedaPrincipal).map(t=>t.moneda))];
 
   otrasMonedas.forEach(simbolo => {
     const txnM = delMes.filter(t=>t.moneda===simbolo);
@@ -1499,15 +1501,16 @@ function renderDashboard() {
       }
     });
   });
+
   const saldoTotal = totalIngresos - totalEgresos;
 
-  document.getElementById('total-ingresos').textContent = fmt(totalIngresos, '₡');
-  document.getElementById('total-egresos').textContent = fmt(totalEgresos, '₡');
+  document.getElementById('total-ingresos').textContent = fmt(totalIngresos, monedaPrincipal);
+  document.getElementById('total-egresos').textContent = fmt(totalEgresos, monedaPrincipal);
   document.getElementById('saldo-mes-label').textContent = mesLabel(mes);
   document.getElementById('stats-otras-monedas').innerHTML = '';
 
   const sm = document.getElementById('saldo-main');
-  sm.textContent = fmt(saldoTotal, '₡');
+  sm.textContent = fmt(saldoTotal, monedaPrincipal);
   sm.className = 'saldo-monto ' + (saldoTotal>=0?'positivo':'negativo');
 
   const warnEl = document.getElementById('tc-warning');
@@ -1521,12 +1524,13 @@ function renderDashboard() {
     warnEl.style.display = 'none';
   }
 
-  // Egresos por categoría — colonizados
+  // Egresos por categoría en moneda principal
   const egxcat = {};
   delMes.filter(t=>t.tipo==='egreso').forEach(t=>{
-    const tc = t.moneda === '₡' ? 1 : (getTc(simboloACodigoTc(t.moneda), t.fecha, 'venta') ?? 0);
+    const tc = t.moneda === monedaPrincipal ? 1 : (getTc(simboloACodigoTc(t.moneda), t.fecha, 'venta') ?? 0);
     egxcat[t.categoria] = (egxcat[t.categoria]||0) + t.monto * tc;
   });
+
   const maxVal = Math.max(...Object.values(egxcat), 1);
   const bars = document.getElementById('bars-categorias');
   if(!Object.keys(egxcat).length) {
@@ -1536,11 +1540,11 @@ function renderDashboard() {
       <div class="bar-row">
         <div class="bar-label">${cat}</div>
         <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxVal*100)}%"></div></div>
-        <div class="bar-val">${fmt(val, '₡')}</div>
+        <div class="bar-val">${fmt(val, monedaPrincipal)}</div>
       </div>`).join('');
   }
 
-    const recientes = allTxn.slice(0,8);
+  const recientes = allTxn.slice(0,8);
   const ult = document.getElementById('ultimas-txn');
   ult.innerHTML = recientes.length ? recientes.map(t=>txnHTML(t)).join('') : '<div class="empty"><i class="ti ti-receipt"></i>Sin transacciones aún</div>';
 }
