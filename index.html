@@ -474,12 +474,14 @@ async function logout() {
   document.getElementById('login-err').style.display = 'none';
 }
 
-function showApp() {
+function showApp(tieneEspacio = true) {
   document.getElementById('screen-loading').style.display = 'none';
   document.getElementById('screen-login').style.display = 'none';
   document.getElementById('screen-app').style.display = 'block';
+  // Ocultar tabs y selector si no tiene espacio aún
+  document.querySelector('.tabs').style.display = tieneEspacio ? '' : 'none';
+  document.getElementById('sel-espacio').style.display = tieneEspacio ? '' : 'none';
 }
-
 function showLogin() {
   document.getElementById('screen-loading').style.display = 'none';
   document.getElementById('screen-app').style.display = 'none';
@@ -492,13 +494,13 @@ async function initApp() {
   try {
     const { data: { session } } = await sb.auth.getSession();
     if(session) {
-      showApp();
+      showApp(false);
       await loadEspacios();
       if(allEspacios.length === 0) {
-        // Primera vez — crear espacio Personal automáticamente
         await crearEspacioInicial();
       } else {
         await cargarEspacio(allEspacios[0]);
+        showApp(true);
       }
     } else {
       showLogin();
@@ -911,6 +913,7 @@ async function crearEspacio() {
   document.getElementById('ne-msg-ok').style.display = 'block';
   setTimeout(() => {
     document.getElementById('ne-msg-ok').style.display = 'none';
+    showApp(true);
     showTab('dashboard');
   }, 1500);
 }
