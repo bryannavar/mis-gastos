@@ -229,27 +229,33 @@
 
 <!-- APP -->
 <div id="screen-app" class="app" style="display:none">
-  <div class="header">
-    <div class="header-top">
-    <h1><i class="ti ti-wallet" aria-hidden="true" style="margin-right:6px;vertical-align:-3px"></i>Mi Presupuesto</h1>
+<div class="header">
+  <div class="header-top">
     <div style="display:flex; align-items:center; gap:8px;">
-      <select id="sel-espacio" onchange="cambiarEspacio(this.value)" style="border:1px solid #e5e7eb; border-radius:8px; padding:5px 10px; font-size:13px; font-family:inherit; background:#f9fafb; color:#374151; cursor:pointer;">
-      </select>
-    <button onclick="showTab('editar-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:16px;" title="Editar espacio"><i class="ti ti-pencil"></i></button>
-    <button onclick="showTab('nuevo-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:16px;" title="Nuevo espacio">＋</button>
-    <button onclick="showTab('ayuda')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:14px; font-weight:600;" title="Ayuda">?</button>
-    <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout"></i></button>
+      <i class="ti ti-wallet" aria-hidden="true" style="font-size:20px; color:var(--accent);"></i>
+      <div>
+        <div style="font-size:11px; color:#888; line-height:1;">Mi Presupuesto</div>
+        <div id="espacio-nombre-header" style="font-size:15px; font-weight:600; color:var(--color-text-primary); line-height:1.3;"></div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <select id="sel-espacio" onchange="cambiarEspacio(this.value)" style="border:1px solid #e5e7eb; border-radius:8px; padding:4px 8px; font-size:12px; font-family:inherit; background:#f9fafb; color:#374151; cursor:pointer; max-width:90px;"></select>
+      <button onclick="showTab('editar-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 7px; cursor:pointer;" title="Editar espacio"><i class="ti ti-pencil" style="font-size:15px;"></i></button>
+      <button onclick="showTab('nuevo-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 7px; cursor:pointer;" title="Nuevo espacio"><i class="ti ti-plus" style="font-size:15px;"></i></button>
+      <button onclick="toggleTema()" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 7px; cursor:pointer;" title="Cambiar tema"><i class="ti ti-palette" id="icon-tema" style="font-size:15px;"></i></button>
+      <button onclick="showTab('ayuda')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 7px; cursor:pointer;" title="Ayuda"><i class="ti ti-help" style="font-size:15px;"></i></button>
+      <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout" style="font-size:15px;"></i></button>
     </div>
   </div>
-    <div class="tabs">
-  		<button class="tab active" onclick="showTab('dashboard')"><i class="ti ti-home"></i> Inicio</button>
-      <button class="tab" onclick="showTab('agregar')"><i class="ti ti-plus"></i> Agregar</button>
-      <button class="tab" onclick="showTab('fijos')"><i class="ti ti-repeat"></i> Fijos</button>
-      <button class="tab" onclick="showTab('presupuesto')"><i class="ti ti-wallet"></i> Presupuesto</button>
-      <button class="tab" onclick="showTab('historial')"><i class="ti ti-list"></i> Historial</button>
-      <button class="tab" onclick="showTab('configuracion')"><i class="ti ti-settings"></i> Config</button>
-	</div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('dashboard')"><i class="ti ti-home"></i> Inicio</button>
+    <button class="tab" onclick="showTab('agregar')"><i class="ti ti-plus"></i> Agregar</button>
+    <button class="tab" onclick="showTab('fijos')"><i class="ti ti-repeat"></i> Fijos</button>
+    <button class="tab" onclick="showTab('presupuesto')"><i class="ti ti-wallet"></i> Presupuesto</button>
+    <button class="tab" onclick="showTab('historial')"><i class="ti ti-list"></i> Historial</button>
+    <button class="tab" onclick="showTab('configuracion')"><i class="ti ti-settings"></i> Config</button>
   </div>
+</div>
 
   <!-- DASHBOARD -->
   <div class="content" id="tab-dashboard">
@@ -521,47 +527,53 @@
   </div>
 
   <!-- AYUDA -->
+<!-- AYUDA -->
 <div class="content" id="tab-ayuda" style="display:none">
   <div class="section-title">¿Cómo usar Mi Presupuesto?</div>
 
   <div style="margin-bottom:16px;">
     <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🏠 Inicio</div>
-    <p style="font-size:13px; color:#555; line-height:1.6;">Muestra el saldo del mes, ingresos, egresos y las últimas transacciones. Todo se consolida en la moneda principal del espacio.</p>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Muestra el saldo del mes, ingresos, egresos y las últimas transacciones. Todo se consolida en la moneda principal del espacio activo. Las transacciones en otras monedas se convierten automáticamente usando el tipo de cambio registrado.</p>
   </div>
 
   <div style="margin-bottom:16px;">
     <div style="font-weight:600; font-size:14px; margin-bottom:6px;">➕ Agregar</div>
-    <p style="font-size:13px; color:#555; line-height:1.6;">Registrá ingresos y egresos. Si la transacción es en moneda extranjera y es de hoy, el tipo de cambio se obtiene automáticamente. Para fechas pasadas debés cargarlo manualmente en Config.</p>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Registrá ingresos y egresos en cualquier moneda habilitada en tu espacio. Si la transacción es en moneda extranjera y es de hoy, el tipo de cambio se obtiene automáticamente desde el Ministerio de Hacienda de Costa Rica. Para fechas pasadas se muestra un aviso y debés cargarlo manualmente en Config.</p>
   </div>
 
   <div style="margin-bottom:16px;">
     <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🔄 Fijos</div>
-    <p style="font-size:13px; color:#555; line-height:1.6;">Registrá gastos que se repiten cada mes (Netflix, alquiler, etc.). Se aplican automáticamente al abrir la app cada mes en el día que definiste.</p>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Registrá gastos que se repiten cada mes (Netflix, alquiler, seguro, etc.) con el día del mes que aplican. Se aplican automáticamente cada medianoche mediante un proceso automático, sin necesidad de abrir la app. Si abrís la app y el fijo no se había aplicado aún, se aplica en ese momento. Los gastos fijos aparecen marcados con 🔄 en el historial.</p>
   </div>
 
   <div style="margin-bottom:16px;">
     <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🎯 Presupuesto</div>
-    <p style="font-size:13px; color:#555; line-height:1.6;">Definí cuánto querés gastar por categoría cada mes. La barra muestra cuánto llevás gastado. Podés importar el presupuesto del mes anterior con un clic.</p>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Definí cuánto querés gastar por categoría cada mes en la moneda principal de tu espacio. La barra muestra el porcentaje consumido — si superás el límite la barra se pone roja y muestra más del 100%. Usá el botón "Importar mes anterior" para copiar los montos del mes pasado en las categorías que aún no tienen presupuesto definido.</p>
   </div>
 
   <div style="margin-bottom:16px;">
     <div style="font-weight:600; font-size:14px; margin-bottom:6px;">📋 Historial</div>
-    <p style="font-size:13px; color:#555; line-height:1.6;">Consultá todas las transacciones de cualquier mes y el resumen del presupuesto de ese período.</p>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Consultá todas las transacciones de cualquier mes — todas las monedas juntas en una sola lista. Cada transacción en moneda extranjera muestra su equivalente en la moneda principal. Al final del historial también ves el resumen del presupuesto de ese mes.</p>
   </div>
 
   <div style="margin-bottom:16px;">
     <div style="font-weight:600; font-size:14px; margin-bottom:6px;">⚙️ Config</div>
-    <p style="font-size:13px; color:#555; line-height:1.6;">Registrá el tipo de cambio manualmente para fechas pasadas. Podés editar o borrar registros existentes.</p>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Registrá el tipo de cambio manualmente para fechas pasadas. Ingresá el valor de compra y venta — la venta siempre debe ser mayor a la compra. Podés borrar registros existentes si necesitás corregirlos.</p>
   </div>
 
   <div style="margin-bottom:16px;">
-    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">📁 Espacios</div>
-    <p style="font-size:13px; color:#555; line-height:1.6;">Creá espacios separados para tu vida personal, negocio o pyme. Cada espacio tiene sus propias transacciones, presupuestos y tipo de cambio. Usá el lápiz ✏️ para editar el espacio activo y el + para crear uno nuevo.</p>
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">📁 Espacios de trabajo</div>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Creá espacios separados para tu vida personal, negocio o pyme. Cada espacio tiene sus propias transacciones, presupuestos, tipo de cambio y categorías — completamente independientes. Al crear un espacio elegís el tipo (personal, pyme o empresa), la moneda principal y las categorías que vas a usar. Usá el lápiz ✏️ para editar el espacio activo y el + para crear uno nuevo.</p>
   </div>
 
   <div style="margin-bottom:16px;">
     <div style="font-weight:600; font-size:14px; margin-bottom:6px;">💱 Tipo de cambio</div>
-    <p style="font-size:13px; color:#555; line-height:1.6;">Para transacciones en dólares con fecha de hoy, el sistema obtiene el tipo de cambio automáticamente desde el Ministerio de Hacienda de Costa Rica. Para otras fechas o monedas, cargalo manualmente en Config.</p>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Para dólares (USD) con fecha de hoy, el sistema obtiene automáticamente el tipo de cambio oficial del Ministerio de Hacienda de Costa Rica con valores reales de compra y venta. Para euros y otras monedas también se obtiene automáticamente para la fecha de hoy. Para fechas pasadas debés cargarlo manualmente en Config.</p>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🌍 Monedas</div>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Cada espacio tiene habilitadas ₡ Colones y $ Dólares por defecto. Podés agregar más monedas al crear o editar el espacio — buscás por nombre o código (ej: EUR, ARS, MXN) y las añadís a tu espacio. Todas las monedas muestran su nombre completo para evitar confusiones con símbolos similares.</p>
   </div>
 </div>
   
@@ -819,6 +831,9 @@ function renderSelectorEspacio() {
   sel.innerHTML = allEspacios.map(e => 
     `<option value="${e.id}" ${espacioActivo && e.id === espacioActivo.id ? 'selected' : ''}>${e.nombre}</option>`
   ).join('');
+  // Actualizar nombre en header
+  const nombreEl = document.getElementById('espacio-nombre-header');
+  if(nombreEl && espacioActivo) nombreEl.textContent = espacioActivo.nombre;
 }
 
 async function cargarTodasLasDivisas() {
