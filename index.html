@@ -478,6 +478,14 @@
       <input type="text" id="ee-nombre" placeholder="Nombre del espacio">
     </div>
     <div class="form-group">
+  <label class="form-label">Monedas</label>
+  <div id="ee-monedas-seleccionadas" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;"></div>
+  <input type="text" id="ee-divisa-select" list="ee-divisas-list" placeholder="Buscá una divisa...">
+  <datalist id="ee-divisas-list"></datalist>
+  <button onclick="agregarDivisaEditEspacio()" style="width:100%; background:#1a1a1a; color:#fff; border:none; border-radius:10px; padding:10px; cursor:pointer; font-size:13px; margin-top:8px;">+ Agregar moneda</button>
+</div>
+
+    <div class="form-group">
       <label class="form-label">Categorías de egreso</label>
       <p style="font-size:12px; color:#aaa; margin-bottom:8px;">Las que tienen gastos registrados no se pueden desactivar.</p>
       <div id="ee-cats-egreso" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;"></div>
@@ -556,6 +564,48 @@ function mesActual() {
   const h = new Date();
   return h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0');
 }
+
+async function agregarDivisaEditEspacio() {
+  const input = document.getElementById('ee-divisa-select');
+  const val = input.value.trim();
+  const codigo = val.split(' — ')[0].trim();
+  const divisa = todasLasDivisas.find(d => d.codigo === codigo);
+  if(!divisa || allMonedas.find(m => m.codigo === codigo)) { input.value = ''; return; }
+
+  const { data: { user } } = await sb.auth.getUser();
+  const { data, error } = await sb.from('monedas_espacio').insert({
+    user_id: user.id,
+    espacio_id: espacioActivo.id,
+    codigo: divisa.codigo,
+    simbolo: divisa.simbolo,
+    nombre: divisa.nombre
+  }).select().single();
+
+  if(!error && data) {
+    allMonedas.push(data);
+    const selMoneda = document.getElementById('ee-moneda');
+    if(selMoneda) selMoneda.innerHTML += `<option value="${divisa.simbolo}">${divisa.simbolo} ${divisa.nombre}</option>`;
+    const contenedor = document.getElementById('ee-monedas-seleccionadas');
+    contenedor.insertAdjacentHTML('beforeend', `
+      <div style="padding:6px 12px; border-radius:20px; font-size:12px; background:#f0fdf4; color:#15803d; border:1px solid #86efac; display:flex; align-items:center; gap:6px;" data-codigo="${divisa.codigo}">
+        ✓ ${divisa.simbolo} ${divisa.nombre}
+        <span onclick="quitarDivisaEditEspacio(this, '${data.id}', '${divisa.codigo}', '${divisa.simbolo}')" style="cursor:pointer; color:#dc2626; font-weight:bold;">✕</span>
+      </div>`);
+  }
+  input.value = '';
+}
+
+async function quitarDivisaEditEspacio(el, id, codigo, simbolo) {
+  if(codigo === 'CRC' || codigo === 'USD') return;
+  const { error } = await sb.from('monedas_espacio').delete().eq('id', id);
+  if(!error) {
+    allMonedas = allMonedas.filter(m => m.id !== id);
+    const selMoneda = document.getElementById('ee-moneda');
+    if(selMoneda) [...selMoneda.options].forEach(opt => { if(opt.value === simbolo) opt.remove(); });
+    el.parentElement.remove();
+  }
+}
+
 
 function mesLabel(m) {
   const [y,mo] = m.split('-');
@@ -1470,14 +1520,19 @@ function formatMontoPresupuesto(input) {
   input.value = raw;
 }
 
-function renderEditarEspacio() {
-  if(!espacioActivo) return;
+async function renderEditarEspacio() {
+  if(!espacioActivo) { showTab('nuevo-espacio'); return; }
   document.getElementById('ee-nombre').value = espacioActivo.nombre;
   document.getElementById('ee-moneda').value = espacioActivo.moneda || '₡';
 
+  // Actualizar opciones de moneda principal con las del espacio
+  const selMoneda = document.getElementById('ee-moneda');
+  selMoneda.innerHTML = allMonedas.map(m => 
+    `<option value="${m.simbolo}" ${espacioActivo.moneda === m.simbolo ? 'selected' : ''}>${m.simbolo} ${m.nombre}</option>`
+  ).join('');
+
   // Categorías con transacciones — no se pueden desactivar
   const catsConTxn = new Set(allTxn.map(t => t.categoria));
-
   ['egreso','ingreso'].forEach(tipo => {
     const contenedor = document.getElementById(`ee-cats-${tipo}`);
     const cats = allCategorias.filter(c => c.tipo === tipo);
@@ -1494,6 +1549,26 @@ function renderEditarEspacio() {
       </div>`;
     }).join('');
   });
+
+  // Monedas del espacio
+  await cargarTodasLasDivisas();
+  const contenedorMonedas = document.getElementById('ee-monedas-seleccionadas');
+  if(contenedorMonedas) {
+    contenedorMonedas.innerHTML = allMonedas.map(m => `
+      <div style="padding:6px 12px; border-radius:20px; font-size:12px; background:#f0fdf4; color:#15803d; border:1px solid #86efac; display:flex; align-items:center; gap:6px;"
+        data-codigo="${m.codigo}">
+        ✓ ${m.simbolo} ${m.nombre}
+        ${m.codigo !== 'CRC' && m.codigo !== 'USD' ? `<span onclick="quitarDivisaEditEspacio(this, '${m.id}', '${m.codigo}', '${m.simbolo}')" style="cursor:pointer; color:#dc2626; font-weight:bold;">✕</span>` : ''}
+      </div>`).join('');
+  }
+
+  const datalist = document.getElementById('ee-divisas-list');
+  if(datalist) {
+    datalist.innerHTML = todasLasDivisas
+      .filter(d => !allMonedas.find(m => m.codigo === d.codigo))
+      .map(d => `<option value="${d.codigo} — ${d.nombre}">`)
+      .join('');
+  }
 }
 
 function toggleCatEditar(el, id, nombre, tipo) {
