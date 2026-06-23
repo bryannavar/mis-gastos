@@ -2,8 +2,8 @@ name: Aplicar Gastos Fijos
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Medianoche hora CR (UTC-6 = 06:00 UTC)
-  workflow_dispatch:  # Permite correrlo manualmente para probar
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
   aplicar:
@@ -13,5 +13,6 @@ jobs:
         run: |
           curl -X POST \
             https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/aplicar-gastos-fijos \
+            -H "Authorization: Bearer sb_publishable_QHVZ_-NZLrg9LMdxTqw6jQ_duI6MJc5" \
             -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json"
