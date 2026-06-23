@@ -810,8 +810,9 @@ async function cargarEspacio(espacio) {
 function renderSelectorMoneda() {
   const sel = document.getElementById('inp-moneda');
   if(!sel) return;
+  const monedaPrincipal = espacioActivo?.moneda || '₡';
   sel.innerHTML = allMonedas.map(m => 
-    `<option value="${m.simbolo}">${m.simbolo} ${m.nombre}</option>`
+    `<option value="${m.simbolo}" ${m.simbolo === monedaPrincipal ? 'selected' : ''}>${m.simbolo} ${m.nombre}</option>`
   ).join('');
 }
 
@@ -1094,9 +1095,22 @@ function formatMonto(input) {
 
 function parseMonto() {
   const moneda = document.getElementById('inp-moneda').value;
-  const raw = document.getElementById('inp-monto').value;
-  // Normalizar: si tiene coma como decimal (5,40) convertir a punto
-  const normalizado = raw.replace(/\./g, '').replace(',', '.');
+  const raw = document.getElementById('inp-monto').value.trim();
+  // Detectar si la coma es decimal (5,40) o separador de miles (1,000)
+  const tienePunto = raw.includes('.');
+  const tieneComa = raw.includes(',');
+  
+  let normalizado = raw;
+  if(tieneComa && tienePunto) {
+    // Formato tipo 1.000,40 → quitar punto, cambiar coma por punto
+    normalizado = raw.replace(/\./g, '').replace(',', '.');
+  } else if(tieneComa && !tienePunto) {
+    // Coma como decimal: 5,40 → 5.40
+    normalizado = raw.replace(',', '.');
+  } else {
+    // Solo punto: 26.18 → ya está bien
+    normalizado = raw;
+  }
   return parseFloat(normalizado) || 0;
 }
 
