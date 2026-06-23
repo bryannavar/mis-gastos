@@ -781,13 +781,7 @@ async function loadGastosFijos() {
 
 function formatMontoFijo(input) {
   const moneda = document.getElementById('gf-moneda').value;
-  if(moneda === '$') {
-    input.value = input.value.replace(/[^0-9.]/g, '');
-  } else {
-    let raw = input.value.replace(/[^0-9]/g, '');
-    if(!raw) { input.value = ''; return; }
-    input.value = parseInt(raw).toLocaleString('es-CR');
-  }
+  input.value = input.value.replace(/[^0-9.]/g, '');
 }
 
 function renderGastosFijos() {
