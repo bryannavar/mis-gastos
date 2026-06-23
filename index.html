@@ -946,24 +946,28 @@ function renderTcHistorial() {
     return;
   }
 
-  list.innerHTML = allTc.slice(0,20).map(t => `
+  list.innerHTML = allTc.slice(0,20).map(t => {
+    const monedaInfo = allMonedas.find(m => m.codigo === t.moneda);
+    const nombreMoneda = monedaInfo ? `${monedaInfo.simbolo} ${monedaInfo.nombre}` : t.moneda;
+    const badgeText = monedaInfo ? monedaInfo.codigo : t.moneda;
+    return `
     <div class="txn-item">
-      <div class="txn-icon ingreso" style="font-size:12px; font-weight:700;">${t.moneda}</div>
+      <div class="txn-icon ingreso" style="font-size:11px; font-weight:700;">${badgeText}</div>
       <div class="txn-info">
-        <div class="txn-cat">${t.moneda === 'USD' ? '$ Dólares' : '€ Euros'}</div>
+        <div class="txn-cat">${nombreMoneda}</div>
         <div class="txn-fecha">${new Date(t.fecha+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'})}</div>
       </div>
       <div class="txn-right">
-        <div class="txn-monto ingreso">
-          Compra: ₡${t.valorCompra.toLocaleString('es-CR')}<br>
-          Venta: ₡${t.valorVenta.toLocaleString('es-CR')}
+        <div style="font-size:12px; color:#16a34a; text-align:right;">
+          Compra: ₡${t.valorCompra ? t.valorCompra.toLocaleString('es-CR') : '—'}<br>
+          Venta: ₡${t.valorVenta ? t.valorVenta.toLocaleString('es-CR') : '—'}
         </div>
         <button class="delete-btn" onclick="deleteTipoCambio('${t.id}')">
           <i class="ti ti-trash"></i>
         </button>
       </div>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
 }
 
 function formatMonto(input) {
@@ -1320,9 +1324,14 @@ async function crearEspacio() {
 }
 
 function simboloACodigoTc(simbolo) {
+  if(simbolo === '₡') return 'CRC';
+  // Buscar en las monedas del espacio activo
+  const moneda = allMonedas.find(m => m.simbolo === simbolo || m.codigo === simbolo);
+  if(moneda) return moneda.codigo;
+  // Fallback legacy
   if(simbolo === '$') return 'USD';
   if(simbolo === '€') return 'EUR';
-  return null;
+  return simbolo;
 }
 
 function renderDashboard() {
