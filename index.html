@@ -1071,50 +1071,47 @@ async function agregarTxn() {
   if(moneda !== monedaPrincipal && monedaActivaCodigo !== monedaPrincipalCodigo) {
     const tcExiste = allTc.find(t => t.moneda === monedaActivaCodigo && t.fecha === fecha);
     if(!tcExiste) {
-      try {
-        btn.innerHTML = '<i class="ti ti-loader"></i> Obteniendo tipo de cambio...';
-        const res = await fetch('https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/get-tipo-cambio', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-          },
-          body: JSON.stringify({ 
-            fecha,
-            monedaBase: monedaPrincipalCodigo,
-            monedaDestino: monedaActivaCodigo
-          })
-        });
-        const tc = await res.json();
-
-        if(tc.compra && tc.venta) {
-          const { data: tcData } = await sb.from('tipo_cambio').insert({
-            user_id: user.id,
-            espacio_id: espacioActivo.id,
-            moneda: monedaActivaCodigo,
-            fecha,
-            valorCompra: tc.compra,
-            valorVenta: tc.venta
-          }).select().single();
-          if(tcData) {
-            allTc.unshift(tcData);
-            allTc.sort((a,b) => b.fecha.localeCompare(a.fecha));
+      // Intentar traer TC automático solo para hoy
+      const hoy = new Date();
+      const fechaHoy = hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0') + '-' + String(hoy.getDate()).padStart(2,'0');
+      
+      if(fecha === fechaHoy) {
+        try {
+          btn.innerHTML = '<i class="ti ti-loader"></i> Obteniendo tipo de cambio...';
+          const res = await fetch('https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/get-tipo-cambio', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${SUPABASE_KEY}`
+            },
+            body: JSON.stringify({ fecha, monedaBase: monedaPrincipalCodigo, monedaDestino: monedaActivaCodigo })
+          });
+          const tc = await res.json();
+          if(tc.compra && tc.venta) {
+            const { data: tcData } = await sb.from('tipo_cambio').insert({
+              user_id: user.id,
+              espacio_id: espacioActivo.id,
+              moneda: monedaActivaCodigo,
+              fecha,
+              valorCompra: tc.compra,
+              valorVenta: tc.venta
+            }).select().single();
+            if(tcData) {
+              allTc.unshift(tcData);
+              allTc.sort((a,b) => b.fecha.localeCompare(a.fecha));
+            }
           }
-          // Avisar si el TC no es de la fecha exacta solicitada
-          const warnEl = document.getElementById('tc-warning');
-          if(!tc.fechaUsada || tc.fechaUsada === 'actual' || tc.fechaUsada !== fecha) {
-            warnEl.textContent = `⚠ No hay TC oficial para el ${fecha}. Se usó el más reciente disponible. Podés ajustarlo en Config.`;
-            warnEl.style.display = 'block';
-          } else {
-            warnEl.style.display = 'none';
-          }
-        } else if(tc.error) {
-          const warnEl = document.getElementById('tc-warning');
-          warnEl.textContent = `⚠ No se pudo obtener el TC para el ${fecha}. Cargalo manualmente en Config.`;
-          warnEl.style.display = 'block';
+        } catch(e) {
+          console.error('Error obteniendo TC:', e);
         }
-      } catch(e) {
-        console.error('Error obteniendo TC:', e);
+      } else {
+        // Fecha pasada sin TC — bloquear y avisar
+        const warnEl = document.getElementById('tc-warning');
+        warnEl.textContent = `⚠ No hay tipo de cambio para el ${fecha}. Cargalo manualmente en Config antes de continuar.`;
+        warnEl.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ti ti-check"></i> Guardar transacción';
+        return;
       }
     }
   }
@@ -1150,6 +1147,7 @@ async function agregarTxn() {
   document.getElementById('inp-monto').value = '';
   document.getElementById('inp-nota').value = '';
   document.getElementById('msg-err').style.display = 'none';
+  document.getElementById('tc-warning').style.display = 'none';
   const ok = document.getElementById('msg-ok');
   ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 2500);
   renderDashboard();
@@ -1157,6 +1155,7 @@ async function agregarTxn() {
     populateMesSelector(); renderHistorial();
   }
 }
+
 async function deleteTxn(id) {
   if(!confirm('¿Eliminar esta transacción?')) return;
   const { error } = await sb.from('transacciones').delete().eq('id', id);
