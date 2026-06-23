@@ -844,25 +844,28 @@ function renderCatsNuevoEspacio() {
 
 function chipCat(nombre, tipo, seleccionada) {
   return `<div onclick="toggleCat(this, '${nombre}', '${tipo}')" style="
+    display:flex; align-items:center; gap:6px;
     padding:6px 12px; border-radius:20px; font-size:12px; cursor:pointer; user-select:none;
-    background:${seleccionada ? '#1a1a1a' : '#f3f4f6'};
-    color:${seleccionada ? '#fff' : '#555'};
-    border:1px solid ${seleccionada ? '#1a1a1a' : '#e5e7eb'};
-  ">${nombre}</div>`;
+    background:${seleccionada ? '#f0fdf4' : '#fef2f2'};
+    color:${seleccionada ? '#15803d' : '#dc2626'};
+    border:1px solid ${seleccionada ? '#86efac' : '#fca5a5'};
+  "><span>${seleccionada ? '✓' : '✕'}</span><span>${nombre}</span></div>`;
 }
 
 function toggleCat(el, nombre, tipo) {
   const sel = catsSeleccionadas[tipo];
   if(sel.has(nombre)) {
     sel.delete(nombre);
-    el.style.background = '#f3f4f6';
-    el.style.color = '#555';
-    el.style.borderColor = '#e5e7eb';
+    el.style.background = '#fef2f2';
+    el.style.color = '#dc2626';
+    el.style.borderColor = '#fca5a5';
+    el.querySelector('span').textContent = '✕';
   } else {
     sel.add(nombre);
-    el.style.background = '#1a1a1a';
-    el.style.color = '#fff';
-    el.style.borderColor = '#1a1a1a';
+    el.style.background = '#f0fdf4';
+    el.style.color = '#15803d';
+    el.style.borderColor = '#86efac';
+    el.querySelector('span').textContent = '✓';
   }
 }
 
