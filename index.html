@@ -1468,12 +1468,6 @@ function populateMesSelector() {
 
 let monedaPresupuesto = '₡';
 
-function setMonedaPresupuesto(m) {
-  monedaPresupuesto = m;
-  document.getElementById('pbtn-colon').classList.toggle('active', m === '₡');
-  document.getElementById('pbtn-dolar').classList.toggle('active', m === '$');
-  renderPresupuesto();
-}
 
 function renderPresupuesto() {
   const mes = mesActual();
