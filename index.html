@@ -639,6 +639,7 @@ async function agregarDivisaEditEspacio() {
         ✓ ${divisa.simbolo} ${divisa.nombre}
         <span onclick="quitarDivisaEditEspacio(this, '${data.id}', '${divisa.codigo}', '${divisa.simbolo}')" style="cursor:pointer; color:#dc2626; font-weight:bold;">✕</span>
       </div>`);
+      renderSelectorMoneda();
   }
   input.value = '';
 }
@@ -651,6 +652,7 @@ async function quitarDivisaEditEspacio(el, id, codigo, simbolo) {
     const selMoneda = document.getElementById('ee-moneda');
     if(selMoneda) [...selMoneda.options].forEach(opt => { if(opt.value === simbolo) opt.remove(); });
     el.parentElement.remove();
+    renderSelectorMoneda();
   }
 }
 
@@ -1778,7 +1780,7 @@ async function guardarEdicionEspacio() {
 
   renderSelectorEspacio();
   selectTipo(tipoActual);
-
+  renderSelectorMoneda();
   document.getElementById('ee-msg-ok').style.display = 'block';
   setTimeout(() => {
     document.getElementById('ee-msg-ok').style.display = 'none';
