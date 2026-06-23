@@ -809,7 +809,7 @@ async function agregarGastoFijo() {
   const nombre = document.getElementById('gf-nombre').value.trim();
   const moneda = document.getElementById('gf-moneda').value;
   const raw = document.getElementById('gf-monto').value;
-  const monto = moneda === '$' ? parseFloat(raw) : parseFloat(raw.replace(/[^0-9]/g, ''));
+  const monto = parseFloat(raw.replace(/[^0-9.]/g, ''));
   const categoria = document.getElementById('gf-categoria').value;
   const dia_mes = parseInt(document.getElementById('gf-dia').value);
   const errEl = document.getElementById('gf-msg-err');
