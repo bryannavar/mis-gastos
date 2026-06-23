@@ -439,9 +439,8 @@
     <div style="padding:6px 12px; border-radius:20px; font-size:12px; background:#f0fdf4; color:#15803d; border:1px solid #86efac;">✓ ₡ Colón costarricense</div>
     <div style="padding:6px 12px; border-radius:20px; font-size:12px; background:#f0fdf4; color:#15803d; border:1px solid #86efac;">✓ $ Dólar estadounidense</div>
   </div>
-  <select id="ne-divisa-select" style="flex:1; margin-bottom:8px;">
-    <option value="">Seleccioná una divisa...</option>
-  </select>
+  <input type="text" id="ne-divisa-select" list="ne-divisas-list" placeholder="Buscá una divisa..." style="width:100%; margin-bottom:8px;">
+<datalist id="ne-divisas-list"></datalist>
   <button onclick="agregarDivisaNuevoEspacio()" style="width:100%; background:#1a1a1a; color:#fff; border:none; border-radius:10px; padding:10px; cursor:pointer; font-size:13px; margin-top:4px;">+ Agregar moneda</button>
 </div>
 
@@ -1166,37 +1165,34 @@ async function renderCatsNuevoEspacio() {
     contenedor.innerHTML = sugeridas.map(cat => chipCat(cat, t, true)).join('');
   });
 
-  // Cargar divisas en el select
+  // Cargar divisas en el datalist
   await cargarTodasLasDivisas();
-  const sel = document.getElementById('ne-divisa-select');
-  if(sel) {
-    sel.innerHTML = '<option value="">Seleccioná una divisa...</option>' +
-      todasLasDivisas
-        .filter(d => d.codigo !== 'CRC' && d.codigo !== 'USD')
-        .map(d => `<option value="${d.codigo}" data-simbolo="${d.simbolo}" data-nombre="${d.nombre}">${d.codigo} — ${d.nombre}</option>`)
-        .join('');
+  const datalist = document.getElementById('ne-divisas-list');
+  if(datalist) {
+    datalist.innerHTML = todasLasDivisas
+      .filter(d => d.codigo !== 'CRC' && d.codigo !== 'USD')
+      .map(d => `<option value="${d.codigo} — ${d.nombre}">`)
+      .join('');
   }
 }
 
 let divisasNuevoEspacio = new Set(['CRC', 'USD']);
 
 function agregarDivisaNuevoEspacio() {
-  const sel = document.getElementById('ne-divisa-select');
-  const codigo = sel.value;
-  if(!codigo || divisasNuevoEspacio.has(codigo)) return;
-  
-  const option = sel.options[sel.selectedIndex];
-  const nombre = option.dataset.nombre || codigo;
-  const simbolo = option.dataset.simbolo || codigo;
+  const input = document.getElementById('ne-divisa-select');
+  const val = input.value.trim();
+  const codigo = val.split(' — ')[0].trim();
+  const divisa = todasLasDivisas.find(d => d.codigo === codigo);
+  if(!divisa || divisasNuevoEspacio.has(codigo)) { input.value = ''; return; }
   
   divisasNuevoEspacio.add(codigo);
   const contenedor = document.getElementById('ne-monedas-seleccionadas');
   contenedor.insertAdjacentHTML('beforeend', `
     <div style="padding:6px 12px; border-radius:20px; font-size:12px; background:#f0fdf4; color:#15803d; border:1px solid #86efac; display:flex; align-items:center; gap:6px;">
-      ✓ ${simbolo} ${nombre}
+      ✓ ${divisa.simbolo} ${divisa.nombre}
       <span onclick="quitarDivisaNuevoEspacio(this, '${codigo}')" style="cursor:pointer; color:#dc2626; font-weight:bold;">✕</span>
     </div>`);
-  sel.value = '';
+  input.value = '';
 }
 
 function quitarDivisaNuevoEspacio(el, codigo) {
