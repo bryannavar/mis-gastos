@@ -202,9 +202,14 @@
 <div id="screen-app" class="app" style="display:none">
   <div class="header">
     <div class="header-top">
-      <h1><i class="ti ti-wallet" aria-hidden="true" style="margin-right:6px;vertical-align:-3px"></i>Mi Presupuesto</h1>
+    <h1><i class="ti ti-wallet" aria-hidden="true" style="margin-right:6px;vertical-align:-3px"></i>Mi Presupuesto</h1>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <select id="sel-espacio" onchange="cambiarEspacio(this.value)" style="border:1px solid #e5e7eb; border-radius:8px; padding:5px 10px; font-size:13px; font-family:inherit; background:#f9fafb; color:#374151; cursor:pointer;">
+      </select>
+      <button onclick="showTab('nuevo-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:16px;" title="Nuevo espacio">＋</button>
       <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout"></i></button>
     </div>
+  </div>
     <div class="tabs">
   		<button class="tab active" onclick="showTab('dashboard')"><i class="ti ti-home"></i> Inicio</button>
  	 	<button class="tab" onclick="showTab('agregar')"><i class="ti ti-plus"></i> Agregar</button>
@@ -338,6 +343,54 @@
     <div id="tc-historial"></div>
   </div>
 
+  <!-- NUEVO ESPACIO -->
+  <div class="content" id="tab-nuevo-espacio" style="display:none">
+    <div class="section-title">Nuevo espacio</div>
+    <p style="font-size:13px; color:#888; margin-bottom:16px; line-height:1.6;">Creá un espacio separado para tu negocio, pyme o cualquier otro presupuesto.</p>
+    
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input type="text" id="ne-nombre" placeholder="ej: Mi Negocio, Casa, Viaje">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo</label>
+      <select id="ne-tipo" onchange="renderCatsNuevoEspacio()">
+        <option value="personal">Personal</option>
+        <option value="pyme">Pyme</option>
+        <option value="empresa">Empresa</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Moneda principal</label>
+      <select id="ne-moneda">
+        <option value="₡">₡ Colones</option>
+        <option value="$">$ Dólares</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categorías de egreso</label>
+      <p style="font-size:12px; color:#aaa; margin-bottom:8px;">Seleccioná las que querés usar. Podés agregar las tuyas.</p>
+      <div id="ne-cats-egreso" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;"></div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="ne-cat-custom" placeholder="Agregar categoría..." style="flex:1;">
+        <button onclick="agregarCatCustom('egreso')" style="background:#1a1a1a; color:#fff; border:none; border-radius:10px; padding:8px 14px; cursor:pointer; font-size:13px;">+ Agregar</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categorías de ingreso</label>
+      <div id="ne-cats-ingreso" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;"></div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="ne-cat-ingreso-custom" placeholder="Agregar categoría..." style="flex:1;">
+        <button onclick="agregarCatCustom('ingreso')" style="background:#1a1a1a; color:#fff; border:none; border-radius:10px; padding:8px 14px; cursor:pointer; font-size:13px;">+ Agregar</button>
+      </div>
+    </div>
+    <button class="btn-guardar" onclick="crearEspacio()">
+      <i class="ti ti-check"></i> Crear espacio
+    </button>
+    <div id="ne-msg-ok" style="display:none; text-align:center; margin-top:12px; color:#16a34a; font-size:14px;"><i class="ti ti-circle-check"></i> ¡Espacio creado!</div>
+    <div id="ne-msg-err" style="display:none; text-align:center; margin-top:12px; color:#dc2626; font-size:14px;"></div>
+  </div>
+
 </div>
 
 <script>
@@ -352,7 +405,10 @@ let tipoActual = 'ingreso';
 let monedaActual = '₡';
 let allTxn = [];
 let allTc = [];
-let allPresupuestos = [];	
+let allPresupuestos = [];
+let allEspacios = [];
+let allCategorias = [];
+let espacioActivo = null;
 
 function fmt(n, moneda) {
   if(moneda === '$') {
@@ -437,8 +493,13 @@ async function initApp() {
     const { data: { session } } = await sb.auth.getSession();
     if(session) {
       showApp();
-      await Promise.all([loadTxn(), loadTc(), loadPresupuestos()]);
-      renderDashboard();
+      await loadEspacios();
+      if(allEspacios.length === 0) {
+        // Primera vez — crear espacio Personal automáticamente
+        await crearEspacioInicial();
+      } else {
+        await cargarEspacio(allEspacios[0]);
+      }
     } else {
       showLogin();
     }
@@ -446,6 +507,28 @@ async function initApp() {
     showLogin();
   }
   appReady = true;
+}
+
+async function crearEspacioInicial() {
+  const { data: { user } } = await sb.auth.getUser();
+  const { data, error } = await sb.from('espacios').insert({
+    user_id: user.id,
+    nombre: 'Personal',
+    tipo: 'personal',
+    moneda: '₡'
+  }).select().single();
+  if(!error && data) {
+    allEspacios = [data];
+    // Insertar categorías por defecto
+    const cats = ['Vivienda','Servicios','Alimentación','Transporte','Salud','Educación','Entretenimiento','Suscripciones','Ropa y compras','Deudas','Ahorro e inversión','Otros'].map(nombre => ({
+      user_id: user.id, espacio_id: data.id, nombre, tipo: 'egreso'
+    }));
+    cats.push({ user_id: user.id, espacio_id: data.id, nombre: 'Salario', tipo: 'ingreso' });
+    cats.push({ user_id: user.id, espacio_id: data.id, nombre: 'Servicios Profesionales', tipo: 'ingreso' });
+    cats.push({ user_id: user.id, espacio_id: data.id, nombre: 'Otros ingresos', tipo: 'ingreso' });
+    await sb.from('categorias').insert(cats);
+    await cargarEspacio(data);
+  }
 }
 
 sb.auth.onAuthStateChange(async (event, session) => {
@@ -467,19 +550,56 @@ if(document.readyState === 'loading') {
 }
 
 // DATA
+async function loadEspacios() {
+  const { data, error } = await sb.from('espacios').select('*').order('created_at', { ascending: true });
+  if(!error && data) allEspacios = data;
+}
+
+async function loadCategorias() {
+  if(!espacioActivo) return;
+  const { data, error } = await sb.from('categorias').select('*').eq('espacio_id', espacioActivo.id);
+  if(!error && data) allCategorias = data;
+}
+
 async function loadTxn() {
-  const { data, error } = await sb.from('transacciones').select('*').order('fecha', { ascending: false });
+  if(!espacioActivo) return;
+  const { data, error } = await sb.from('transacciones').select('*').eq('espacio_id', espacioActivo.id).order('fecha', { ascending: false });
   if(!error && data) allTxn = data;
 }
 
 async function loadTc() {
-  const { data, error } = await sb.from('tipo_cambio').select('*').order('fecha', { ascending: false });
+  if(!espacioActivo) return;
+  const { data, error } = await sb.from('tipo_cambio').select('*').eq('espacio_id', espacioActivo.id).order('fecha', { ascending: false });
   if(!error && data) allTc = data;
 }
 
 async function loadPresupuestos() {
-  const { data, error } = await sb.from('presupuestos').select('*');
+  if(!espacioActivo) return;
+  const { data, error } = await sb.from('presupuestos').select('*').eq('espacio_id', espacioActivo.id);
   if(!error && data) allPresupuestos = data;
+}
+
+async function cargarEspacio(espacio) {
+  espacioActivo = espacio;
+  monedaActual = espacio.moneda || '₡';
+  await Promise.all([loadTxn(), loadTc(), loadPresupuestos(), loadCategorias()]);
+  renderSelectorEspacio();
+  renderDashboard();
+}
+
+function renderSelectorEspacio() {
+  const sel = document.getElementById('sel-espacio');
+  if(!sel) return;
+  sel.innerHTML = allEspacios.map(e => 
+    `<option value="${e.id}" ${espacioActivo && e.id === espacioActivo.id ? 'selected' : ''}>${e.nombre}</option>`
+  ).join('');
+}
+
+async function cambiarEspacio(id) {
+  const espacio = allEspacios.find(e => e.id === id);
+  if(!espacio) return;
+  await cargarEspacio(espacio);
+  renderSelectorEspacio();
 }
 	
 function getTc(codigoMoneda, fechaRef, tipo = 'venta') {
@@ -520,6 +640,7 @@ async function guardarTipoCambio() {
   const { data, error } = await sb.from('tipo_cambio')
   .insert({
     user_id: user.id,
+    espacio_id: espacioActivo.id,
     moneda,
     fecha,
     valorCompra: valorcompra,
@@ -608,6 +729,7 @@ async function agregarTxn() {
   const { data: { user } } = await sb.auth.getUser();
   const txn = {
     user_id: user.id,
+    espacio_id: espacioActivo.id,
     tipo: tipoActual,
     monto,
     moneda: document.getElementById('inp-moneda').value,
@@ -657,13 +779,14 @@ async function deleteTxn(id) {
 
 // UI
 function showTab(t) {
-  ['dashboard','agregar','presupuesto','historial','configuracion'].forEach(x => {
+  ['dashboard','agregar','presupuesto','historial','configuracion','nuevo-espacio'].forEach(x => {
     document.getElementById('tab-'+x).style.display = x===t ? '' : 'none';
   });
   document.querySelectorAll('.tab').forEach((el,i) => {
     el.classList.toggle('active', ['dashboard','agregar','presupuesto','historial','configuracion'][i]===t);
   });
   if(t==='historial') { populateMesSelector(); renderHistorial(); }
+  if(t==='nuevo-espacio') { renderCatsNuevoEspacio(); }
   if(t==='presupuesto') { renderPresupuesto(); }
   if(t==='configuracion') {
     renderTcHistorial();
@@ -701,6 +824,113 @@ function txnHTML(t) {
       <button class="delete-btn" onclick="deleteTxn('${t.id}')"><i class="ti ti-trash"></i></button>
     </div>
   </div>`;
+}
+
+const CATS_SUGERIDAS = {
+  personal: {
+    egreso: ['Vivienda','Servicios','Alimentación','Transporte','Salud','Educación','Entretenimiento','Suscripciones','Ropa y compras','Deudas','Ahorro e inversión','Otros'],
+    ingreso: ['Salario','Servicios Profesionales','Otros ingresos']
+  },
+  pyme: {
+    egreso: ['Nómina','Alquiler','Proveedores','Servicios públicos','Publicidad','Impuestos','Préstamos','Inventario','Otros'],
+    ingreso: ['Ventas','Servicios','Otros ingresos']
+  },
+  empresa: {
+    egreso: ['Nómina','Alquiler','Proveedores','Servicios públicos','Publicidad','Impuestos','Préstamos','Inventario','Activos','Legal','Logística','Otros'],
+    ingreso: ['Ventas','Servicios','Dividendos','Otros ingresos']
+  }
+};
+
+let catsSeleccionadas = { egreso: new Set(), ingreso: new Set() };
+
+function renderCatsNuevoEspacio() {
+  const tipo = document.getElementById('ne-tipo').value;
+  catsSeleccionadas = { egreso: new Set(), ingreso: new Set() };
+
+  ['egreso','ingreso'].forEach(t => {
+    const contenedor = document.getElementById(`ne-cats-${t}`);
+    const sugeridas = CATS_SUGERIDAS[tipo][t];
+    sugeridas.forEach(cat => catsSeleccionadas[t].add(cat));
+    contenedor.innerHTML = sugeridas.map(cat => chipCat(cat, t, true)).join('');
+  });
+}
+
+function chipCat(nombre, tipo, seleccionada) {
+  return `<div onclick="toggleCat(this, '${nombre}', '${tipo}')" style="
+    padding:6px 12px; border-radius:20px; font-size:12px; cursor:pointer; user-select:none;
+    background:${seleccionada ? '#1a1a1a' : '#f3f4f6'};
+    color:${seleccionada ? '#fff' : '#555'};
+    border:1px solid ${seleccionada ? '#1a1a1a' : '#e5e7eb'};
+  ">${nombre}</div>`;
+}
+
+function toggleCat(el, nombre, tipo) {
+  const sel = catsSeleccionadas[tipo];
+  if(sel.has(nombre)) {
+    sel.delete(nombre);
+    el.style.background = '#f3f4f6';
+    el.style.color = '#555';
+    el.style.borderColor = '#e5e7eb';
+  } else {
+    sel.add(nombre);
+    el.style.background = '#1a1a1a';
+    el.style.color = '#fff';
+    el.style.borderColor = '#1a1a1a';
+  }
+}
+
+function agregarCatCustom(tipo) {
+  const inputId = tipo === 'egreso' ? 'ne-cat-custom' : 'ne-cat-ingreso-custom';
+  const input = document.getElementById(inputId);
+  const nombre = input.value.trim();
+  if(!nombre) return;
+  catsSeleccionadas[tipo].add(nombre);
+  const contenedor = document.getElementById(`ne-cats-${tipo}`);
+  contenedor.insertAdjacentHTML('beforeend', chipCat(nombre, tipo, true));
+  input.value = '';
+}
+
+async function crearEspacio() {
+  const nombre = document.getElementById('ne-nombre').value.trim();
+  const tipo = document.getElementById('ne-tipo').value;
+  const moneda = document.getElementById('ne-moneda').value;
+  const errEl = document.getElementById('ne-msg-err');
+
+  if(!nombre) {
+    errEl.textContent = 'Ingresá un nombre para el espacio';
+    errEl.style.display = 'block';
+    setTimeout(() => errEl.style.display = 'none', 3000);
+    return;
+  }
+
+  const { data: { user } } = await sb.auth.getUser();
+  const { data: espacio, error } = await sb.from('espacios').insert({
+    user_id: user.id, nombre, tipo, moneda
+  }).select().single();
+
+  if(error) {
+    errEl.textContent = 'Error: ' + error.message;
+    errEl.style.display = 'block';
+    setTimeout(() => errEl.style.display = 'none', 3000);
+    return;
+  }
+
+  // Insertar categorías seleccionadas
+  const cats = [];
+  catsSeleccionadas.egreso.forEach(n => cats.push({ user_id: user.id, espacio_id: espacio.id, nombre: n, tipo: 'egreso' }));
+  catsSeleccionadas.ingreso.forEach(n => cats.push({ user_id: user.id, espacio_id: espacio.id, nombre: n, tipo: 'ingreso' }));
+  if(cats.length) await sb.from('categorias').insert(cats);
+
+  allEspacios.push(espacio);
+  renderSelectorEspacio();
+  await cargarEspacio(espacio);
+
+  document.getElementById('ne-nombre').value = '';
+  document.getElementById('ne-msg-ok').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('ne-msg-ok').style.display = 'none';
+    showTab('dashboard');
+  }, 1500);
 }
 
 function simboloACodigoTc(simbolo) {
@@ -860,7 +1090,14 @@ async function guardarPresupuesto(categoria, input) {
       existe.monto = monto;
     }
   } else if(monto > 0) {
-    const { data, error } = await sb.from('presupuestos').insert({ user_id: user.id, categoria, monto, mes, moneda }).select().single();
+    const { data, error } = await sb.from('presupuestos').insert({ 
+      user_id: user.id, 
+      espacio_id: espacioActivo.id,
+      categoria, 
+      monto, 
+      mes, 
+      moneda 
+    }).select().single();
     if(!error && data) allPresupuestos.push(data);
   }
   renderPresupuesto();
