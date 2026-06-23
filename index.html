@@ -1059,7 +1059,10 @@ async function agregarTxn() {
 
   const { data: { user } } = await sb.auth.getUser();
   const moneda = document.getElementById('inp-moneda').value;
-  const fecha = document.getElementById('inp-fecha').value || new Date().toISOString().slice(0,10);
+  const fecha = document.getElementById('inp-fecha').value || (() => {
+    const h = new Date();
+    return h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0') + '-' + String(h.getDate()).padStart(2,'0');
+  })();
 
   const monedaPrincipal = espacioActivo.moneda || '₡';
   const monedaActivaCodigo = allMonedas.find(m => m.simbolo === moneda)?.codigo;
@@ -1083,6 +1086,7 @@ async function agregarTxn() {
           })
         });
         const tc = await res.json();
+
         if(tc.compra && tc.venta) {
           const { data: tcData } = await sb.from('tipo_cambio').insert({
             user_id: user.id,
@@ -1096,6 +1100,16 @@ async function agregarTxn() {
             allTc.unshift(tcData);
             allTc.sort((a,b) => b.fecha.localeCompare(a.fecha));
           }
+          // Avisar si el TC usado no es de la fecha exacta
+          if(tc.fechaUsada && tc.fechaUsada !== fecha) {
+            const warnEl = document.getElementById('tc-warning');
+            warnEl.textContent = `⚠ No hay TC oficial para el ${fecha}. Se usó el del día hábil más cercano (${tc.fechaUsada}). Podés ajustarlo en Config.`;
+            warnEl.style.display = 'block';
+          }
+        } else if(tc.error) {
+          const warnEl = document.getElementById('tc-warning');
+          warnEl.textContent = `⚠ No se pudo obtener el TC para el ${fecha}. Cargalo manualmente en Config.`;
+          warnEl.style.display = 'block';
         }
       } catch(e) {
         console.error('Error obteniendo TC:', e);
