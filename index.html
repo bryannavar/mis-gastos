@@ -355,9 +355,16 @@
   </div>
 
   <!-- PRESUPUESTO -->
+<!-- PRESUPUESTO -->
 <div class="content" id="tab-presupuesto" style="display:none">
   <div class="section-title">Presupuesto del mes</div>
-  <p style="font-size:13px; color:#888; margin-bottom:16px; line-height:1.6;">Definí cuánto querés gastar por categoría este mes.</p>
+  <p style="font-size:13px; color:#888; margin-bottom:8px; line-height:1.6;">Definí cuánto querés gastar por categoría este mes.</p>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <span style="font-size:12px; color:#888;">Moneda del presupuesto: <strong id="presupuesto-moneda-label"></strong></span>
+    <button onclick="importarPresupuestoMesAnterior()" style="background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; font-family:inherit; color:#374151;">
+      <i class="ti ti-copy"></i> Importar mes anterior
+    </button>
+  </div>
   <div id="presupuesto-list"></div>
 </div>
 
@@ -1476,6 +1483,11 @@ let monedaPresupuesto = '₡';
 
 
 function renderPresupuesto() {
+  const labelMoneda = document.getElementById('presupuesto-moneda-label');
+if(labelMoneda) {
+  const monedaInfo = allMonedas.find(m => m.simbolo === moneda);
+  labelMoneda.textContent = monedaInfo ? monedaInfo.nombre : moneda;
+}
   const mes = mesActual();
   const moneda = espacioActivo?.moneda || '₡';
   const monedaCodigo = allMonedas.find(m => m.simbolo === moneda)?.codigo || 'CRC';
@@ -1529,6 +1541,53 @@ function formatMontoPresupuesto(input) {
   let raw = input.value.replace(/[^0-9.]/g, '');
   input.value = raw;
 }
+
+async function importarPresupuestoMesAnterior() {
+  const mes = mesActual();
+  const moneda = espacioActivo?.moneda || '₡';
+  
+  // Calcular mes anterior
+  const [anio, mesNum] = mes.split('-').map(Number);
+  const fechaAnterior = new Date(anio, mesNum - 2, 1);
+  const mesAnterior = fechaAnterior.getFullYear() + '-' + String(fechaAnterior.getMonth()+1).padStart(2,'0');
+
+  // Presupuestos del mes anterior
+  const presupAnterior = allPresupuestos.filter(p => p.mes === mesAnterior);
+  if(!presupAnterior.length) {
+    alert('No hay presupuesto definido para el mes anterior.');
+    return;
+  }
+
+  // Solo importar categorías que no tienen presupuesto en el mes actual
+  const presupActual = allPresupuestos.filter(p => p.mes === mes);
+  const { data: { user } } = await sb.auth.getUser();
+  let importados = 0;
+
+  for(const p of presupAnterior) {
+    const yaExiste = presupActual.find(pa => pa.categoria === p.categoria);
+    if(!yaExiste) {
+      const { data, error } = await sb.from('presupuestos').insert({
+        user_id: user.id,
+        espacio_id: espacioActivo.id,
+        categoria: p.categoria,
+        monto: p.monto,
+        mes,
+        moneda
+      }).select().single();
+      if(!error && data) {
+        allPresupuestos.push(data);
+        importados++;
+      }
+    }
+  }
+
+  if(importados === 0) {
+    alert('Todas las categorías ya tienen presupuesto definido para este mes.');
+  } else {
+    renderPresupuesto();
+  }
+}
+
 
 async function renderEditarEspacio() {
   if(!espacioActivo) { showTab('nuevo-espacio'); return; }
