@@ -260,15 +260,15 @@
       <div class="saldo-mes" id="saldo-mes-label"></div>
     </div>
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label"><i class="ti ti-arrow-up" style="color:#16a34a"></i> Ingresos ₡</div>
-        <div class="stat-val ingreso" id="total-ingresos">₡0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label"><i class="ti ti-arrow-down" style="color:#dc2626"></i> Egresos ₡</div>
-        <div class="stat-val egreso" id="total-egresos">₡0</div>
-      </div>
-    </div>
+  <div class="stat-card">
+    <div class="stat-label"><i class="ti ti-arrow-up" style="color:#16a34a"></i> <span id="label-ingresos">Ingresos</span></div>
+    <div class="stat-val ingreso" id="total-ingresos">₡0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label"><i class="ti ti-arrow-down" style="color:#dc2626"></i> <span id="label-egresos">Egresos</span></div>
+    <div class="stat-val egreso" id="total-egresos">₡0</div>
+  </div>
+</div>
     <div class="stats-grid" id="stats-otras-monedas" style="margin-bottom:0"></div>
     <div class="section-title">Egresos por categoría</div>
     <div id="bars-categorias"></div>
@@ -1506,6 +1506,8 @@ function renderDashboard() {
 
   document.getElementById('total-ingresos').textContent = fmt(totalIngresos, monedaPrincipal);
   document.getElementById('total-egresos').textContent = fmt(totalEgresos, monedaPrincipal);
+  document.getElementById('label-ingresos').textContent = `Ingresos ${monedaPrincipal}`;
+  document.getElementById('label-egresos').textContent = `Egresos ${monedaPrincipal}`;
   document.getElementById('saldo-mes-label').textContent = mesLabel(mes);
   document.getElementById('stats-otras-monedas').innerHTML = '';
 
