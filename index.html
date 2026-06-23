@@ -1089,16 +1089,19 @@ function formatMonto(input) {
   if(moneda === '$') {
     input.value = input.value.replace(/[^0-9.]/g, '');
   } else {
-    let raw = input.value.replace(/[^0-9]/g, '');
+    let raw = input.value.replace(/[^0-9.,]/g, '').replace(',', '.');
     if(!raw) { input.value = ''; return; }
-    input.value = parseInt(raw).toLocaleString('es-CR');
+    const num = parseFloat(raw);
+    if(isNaN(num)) { input.value = ''; return; }
+    input.value = num.toLocaleString('es-CR');
   }
 }
 
 function parseMonto() {
   const moneda = document.getElementById('inp-moneda').value;
   const raw = document.getElementById('inp-monto').value;
-  return moneda === '$' ? parseFloat(raw) || 0 : parseFloat(raw.replace(/[^0-9]/g, '')) || 0;
+  if(moneda === '$') return parseFloat(raw) || 0;
+  return parseFloat(raw.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
 }
 
 async function agregarTxn() {
