@@ -1100,11 +1100,13 @@ async function agregarTxn() {
             allTc.unshift(tcData);
             allTc.sort((a,b) => b.fecha.localeCompare(a.fecha));
           }
-          // Avisar si el TC usado no es de la fecha exacta
-          if(tc.fechaUsada && tc.fechaUsada !== fecha) {
-            const warnEl = document.getElementById('tc-warning');
-            warnEl.textContent = `⚠ No hay TC oficial para el ${fecha}. Se usó el del día hábil más cercano (${tc.fechaUsada}). Podés ajustarlo en Config.`;
+          // Avisar si el TC no es de la fecha exacta solicitada
+          const warnEl = document.getElementById('tc-warning');
+          if(!tc.fechaUsada || tc.fechaUsada === 'actual' || tc.fechaUsada !== fecha) {
+            warnEl.textContent = `⚠ No hay TC oficial para el ${fecha}. Se usó el más reciente disponible. Podés ajustarlo en Config.`;
             warnEl.style.display = 'block';
+          } else {
+            warnEl.style.display = 'none';
           }
         } else if(tc.error) {
           const warnEl = document.getElementById('tc-warning');
@@ -1155,7 +1157,6 @@ async function agregarTxn() {
     populateMesSelector(); renderHistorial();
   }
 }
-
 async function deleteTxn(id) {
   if(!confirm('¿Eliminar esta transacción?')) return;
   const { error } = await sb.from('transacciones').delete().eq('id', id);
