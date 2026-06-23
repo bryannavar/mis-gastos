@@ -255,7 +255,7 @@
   <div class="content" id="tab-dashboard">
     <div id="tc-warning" style="display:none; background:#fef3c7; border:1px solid #f59e0b; border-radius:10px; padding:12px 16px; margin-bottom:14px; font-size:13px; color:#92400e; line-height:1.5;"></div>
     <div class="saldo-card">
-      <div class="saldo-label">Saldo del mes (₡)</div>
+      <div class="saldo-label">Saldo del mes (<span id="saldo-moneda-label">₡</span>)</div>
       <div class="saldo-monto" id="saldo-main">₡0</div>
       <div class="saldo-mes" id="saldo-mes-label"></div>
     </div>
@@ -1508,6 +1508,7 @@ function renderDashboard() {
   document.getElementById('total-egresos').textContent = fmt(totalEgresos, monedaPrincipal);
   document.getElementById('label-ingresos').textContent = `Ingresos ${monedaPrincipal}`;
   document.getElementById('label-egresos').textContent = `Egresos ${monedaPrincipal}`;
+  document.getElementById('saldo-moneda-label').textContent = monedaPrincipal;
   document.getElementById('saldo-mes-label').textContent = mesLabel(mes);
   document.getElementById('stats-otras-monedas').innerHTML = '';
 
