@@ -774,26 +774,39 @@ function renderSelectorEspacio() {
 }
 
 async function cargarTodasLasDivisas() {
-  if(todasLasDivisas.length) return; // ya cargadas
+  if(todasLasDivisas.length) return;
   try {
     const res = await fetch('https://open.er-api.com/v6/latest/USD');
     const data = await res.json();
-    const nombres = {
-      'CRC': 'Colón costarricense', 'USD': 'Dólar estadounidense', 'EUR': 'Euro',
-      'GBP': 'Libra esterlina', 'MXN': 'Peso mexicano', 'ARS': 'Peso argentino',
-      'COP': 'Peso colombiano', 'BRL': 'Real brasileño', 'CLP': 'Peso chileno',
-      'PEN': 'Sol peruano', 'UYU': 'Peso uruguayo', 'PYG': 'Guaraní paraguayo',
-      'BOB': 'Boliviano', 'GTQ': 'Quetzal guatemalteco', 'HNL': 'Lempira hondureño',
-      'NIO': 'Córdoba nicaragüense', 'DOP': 'Peso dominicano', 'JPY': 'Yen japonés',
-      'CNY': 'Yuan chino', 'CAD': 'Dólar canadiense', 'AUD': 'Dólar australiano',
-      'CHF': 'Franco suizo'
+    const info = {
+      'CRC': { simbolo: '₡', nombre: 'Colón costarricense' },
+      'USD': { simbolo: '$', nombre: 'Dólar estadounidense' },
+      'EUR': { simbolo: '€', nombre: 'Euro' },
+      'GBP': { simbolo: '£', nombre: 'Libra esterlina' },
+      'MXN': { simbolo: 'MX$', nombre: 'Peso mexicano' },
+      'ARS': { simbolo: 'AR$', nombre: 'Peso argentino' },
+      'COP': { simbolo: 'CO$', nombre: 'Peso colombiano' },
+      'BRL': { simbolo: 'R$', nombre: 'Real brasileño' },
+      'CLP': { simbolo: 'CL$', nombre: 'Peso chileno' },
+      'PEN': { simbolo: 'S/', nombre: 'Sol peruano' },
+      'UYU': { simbolo: 'UY$', nombre: 'Peso uruguayo' },
+      'PYG': { simbolo: '₲', nombre: 'Guaraní paraguayo' },
+      'BOB': { simbolo: 'Bs', nombre: 'Boliviano' },
+      'GTQ': { simbolo: 'Q', nombre: 'Quetzal guatemalteco' },
+      'HNL': { simbolo: 'L', nombre: 'Lempira hondureño' },
+      'NIO': { simbolo: 'C$', nombre: 'Córdoba nicaragüense' },
+      'DOP': { simbolo: 'RD$', nombre: 'Peso dominicano' },
+      'JPY': { simbolo: '¥', nombre: 'Yen japonés' },
+      'CNY': { simbolo: 'CN¥', nombre: 'Yuan chino' },
+      'CAD': { simbolo: 'CA$', nombre: 'Dólar canadiense' },
+      'AUD': { simbolo: 'A$', nombre: 'Dólar australiano' },
+      'CHF': { simbolo: 'Fr', nombre: 'Franco suizo' }
     };
     todasLasDivisas = Object.keys(data.rates).map(codigo => ({
       codigo,
-      simbolo: codigo,
-      nombre: nombres[codigo] || codigo
+      simbolo: info[codigo]?.simbolo || codigo,
+      nombre: info[codigo]?.nombre || codigo
     }));
-    // Poner CRC y USD de primero
     todasLasDivisas.sort((a, b) => {
       if(a.codigo === 'CRC') return -1;
       if(b.codigo === 'CRC') return 1;
