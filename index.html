@@ -206,8 +206,11 @@
     <div style="display:flex; align-items:center; gap:8px;">
       <select id="sel-espacio" onchange="cambiarEspacio(this.value)" style="border:1px solid #e5e7eb; border-radius:8px; padding:5px 10px; font-size:13px; font-family:inherit; background:#f9fafb; color:#374151; cursor:pointer;">
       </select>
-      <button onclick="showTab('nuevo-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:16px;" title="Nuevo espacio">＋</button>
-      <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout"></i></button>
+     <select id="sel-espacio" onchange="cambiarEspacio(this.value)" style="border:1px solid #e5e7eb; border-radius:8px; padding:5px 10px; font-size:13px; font-family:inherit; background:#f9fafb; color:#374151; cursor:pointer;">
+    </select>
+    <button onclick="showTab('editar-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:16px;" title="Editar espacio"><i class="ti ti-pencil"></i></button>
+    <button onclick="showTab('nuevo-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:16px;" title="Nuevo espacio">＋</button>
+    <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout"></i></button>
     </div>
   </div>
     <div class="tabs">
@@ -386,7 +389,46 @@
     <div id="ne-msg-ok" style="display:none; text-align:center; margin-top:12px; color:#16a34a; font-size:14px;"><i class="ti ti-circle-check"></i> ¡Espacio creado!</div>
     <div id="ne-msg-err" style="display:none; text-align:center; margin-top:12px; color:#dc2626; font-size:14px;"></div>
   </div>
+  <!-- EDITAR ESPACIO -->
+  <div class="content" id="tab-editar-espacio" style="display:none">
+    <div class="section-title">Editar espacio</div>
+    <p style="font-size:13px; color:#888; margin-bottom:16px; line-height:1.6;">Modificá el nombre, moneda y categorías de tu espacio activo.</p>
 
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input type="text" id="ee-nombre" placeholder="Nombre del espacio">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Moneda principal</label>
+      <select id="ee-moneda">
+        <option value="₡">₡ Colones</option>
+        <option value="$">$ Dólares</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categorías de egreso</label>
+      <p style="font-size:12px; color:#aaa; margin-bottom:8px;">Las que tienen gastos registrados no se pueden desactivar.</p>
+      <div id="ee-cats-egreso" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;"></div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="ee-cat-egreso-custom" placeholder="Agregar categoría...">
+        <button onclick="agregarCatEditEspacio('egreso')" style="background:#1a1a1a; color:#fff; border:none; border-radius:10px; padding:8px 14px; cursor:pointer; font-size:13px;">+ Agregar</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categorías de ingreso</label>
+      <p style="font-size:12px; color:#aaa; margin-bottom:8px;">Las que tienen ingresos registrados no se pueden desactivar.</p>
+      <div id="ee-cats-ingreso" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;"></div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="ee-cat-ingreso-custom" placeholder="Agregar categoría...">
+        <button onclick="agregarCatEditEspacio('ingreso')" style="background:#1a1a1a; color:#fff; border:none; border-radius:10px; padding:8px 14px; cursor:pointer; font-size:13px;">+ Agregar</button>
+      </div>
+    </div>
+    <button class="btn-guardar" onclick="guardarEdicionEspacio()">
+      <i class="ti ti-check"></i> Guardar cambios
+    </button>
+    <div id="ee-msg-ok" style="display:none; text-align:center; margin-top:12px; color:#16a34a; font-size:14px;"><i class="ti ti-circle-check"></i> ¡Guardado!</div>
+    <div id="ee-msg-err" style="display:none; text-align:center; margin-top:12px; color:#dc2626; font-size:14px;"></div>
+  </div>
   
   <div style="text-align:center; padding: 20px 16px; border-top: 0.5px solid #e8e8e8; margin-top: 8px;">
     <p style="font-size: 13px; color: #555; margin-bottom: 4px;">🔒 Tu información es 100% privada y confidencial</p>
@@ -767,7 +809,7 @@ async function deleteTxn(id) {
 
 // UI
 function showTab(t) {
-  ['dashboard','agregar','presupuesto','historial','configuracion','nuevo-espacio'].forEach(x => {
+  ['dashboard','agregar','presupuesto','historial','configuracion','nuevo-espacio','editar-espacio'].forEach(x => {
     document.getElementById('tab-'+x).style.display = x===t ? '' : 'none';
   });
   document.querySelectorAll('.tab').forEach((el,i) => {
@@ -775,6 +817,7 @@ function showTab(t) {
   });
   if(t==='historial') { populateMesSelector(); renderHistorial(); }
   if(t==='nuevo-espacio') { renderCatsNuevoEspacio(); }
+  if(t==='editar-espacio') { renderEditarEspacio(); }
   if(t==='presupuesto') { renderPresupuesto(); }
   if(t==='configuracion') {
     renderTcHistorial();
@@ -1065,6 +1108,115 @@ function renderPresupuesto() {
 function formatMontoPresupuesto(input) {
   let raw = input.value.replace(/[^0-9.]/g, '');
   input.value = raw;
+}
+
+function renderEditarEspacio() {
+  if(!espacioActivo) return;
+  document.getElementById('ee-nombre').value = espacioActivo.nombre;
+  document.getElementById('ee-moneda').value = espacioActivo.moneda || '₡';
+
+  // Categorías con transacciones — no se pueden desactivar
+  const catsConTxn = new Set(allTxn.map(t => t.categoria));
+
+  ['egreso','ingreso'].forEach(tipo => {
+    const contenedor = document.getElementById(`ee-cats-${tipo}`);
+    const cats = allCategorias.filter(c => c.tipo === tipo);
+    contenedor.innerHTML = cats.map(cat => {
+      const tieneUso = catsConTxn.has(cat.nombre);
+      return `<div style="
+        display:flex; align-items:center; gap:6px;
+        padding:6px 12px; border-radius:20px; font-size:12px; cursor:${tieneUso ? 'not-allowed' : 'pointer'}; user-select:none;
+        background:#f0fdf4; color:#15803d; border:1px solid #86efac;
+        opacity:${tieneUso ? '0.6' : '1'};
+      " ${tieneUso ? '' : `onclick="toggleCatEditar(this, '${cat.id}', '${cat.nombre}', '${tipo}')"`}
+         data-id="${cat.id}" data-activa="true">
+        <span>✓</span><span>${cat.nombre}</span>${tieneUso ? '<span style="font-size:10px;color:#888;"> (en uso)</span>' : ''}
+      </div>`;
+    }).join('');
+  });
+}
+
+function toggleCatEditar(el, id, nombre, tipo) {
+  const activa = el.dataset.activa === 'true';
+  if(activa) {
+    el.dataset.activa = 'false';
+    el.style.background = '#fef2f2';
+    el.style.color = '#dc2626';
+    el.style.borderColor = '#fca5a5';
+    el.querySelector('span').textContent = '✕';
+  } else {
+    el.dataset.activa = 'true';
+    el.style.background = '#f0fdf4';
+    el.style.color = '#15803d';
+    el.style.borderColor = '#86efac';
+    el.querySelector('span').textContent = '✓';
+  }
+}
+
+function agregarCatEditEspacio(tipo) {
+  const inputId = tipo === 'egreso' ? 'ee-cat-egreso-custom' : 'ee-cat-ingreso-custom';
+  const input = document.getElementById(inputId);
+  const nombre = input.value.trim();
+  if(!nombre) return;
+  const contenedor = document.getElementById(`ee-cats-${tipo}`);
+  contenedor.insertAdjacentHTML('beforeend', `<div style="
+    display:flex; align-items:center; gap:6px;
+    padding:6px 12px; border-radius:20px; font-size:12px; cursor:pointer; user-select:none;
+    background:#f0fdf4; color:#15803d; border:1px solid #86efac;
+  " onclick="toggleCatEditar(this, 'nueva', '${nombre}', '${tipo}')" data-id="nueva" data-nombre="${nombre}" data-activa="true" data-tipo="${tipo}">
+    <span>✓</span><span>${nombre}</span>
+  </div>`);
+  input.value = '';
+}
+
+async function guardarEdicionEspacio() {
+  const nombre = document.getElementById('ee-nombre').value.trim();
+  const moneda = document.getElementById('ee-moneda').value;
+  const errEl = document.getElementById('ee-msg-err');
+
+  if(!nombre) {
+    errEl.textContent = 'Ingresá un nombre'; errEl.style.display='block';
+    setTimeout(()=>errEl.style.display='none',3000); return;
+  }
+
+  const { data: { user } } = await sb.auth.getUser();
+
+  // Actualizar espacio
+  await sb.from('espacios').update({ nombre, moneda }).eq('id', espacioActivo.id);
+  espacioActivo.nombre = nombre;
+  espacioActivo.moneda = moneda;
+  monedaActual = moneda;
+
+  // Borrar categorías desactivadas (sin transacciones)
+  const catsConTxn = new Set(allTxn.map(t => t.categoria));
+  const desactivadas = [...document.querySelectorAll('#ee-cats-egreso [data-activa="false"], #ee-cats-ingreso [data-activa="false"]')]
+    .map(el => el.dataset.id).filter(id => id !== 'nueva');
+  if(desactivadas.length) {
+    await sb.from('categorias').delete().in('id', desactivadas);
+    allCategorias = allCategorias.filter(c => !desactivadas.includes(c.id));
+  }
+
+  // Agregar categorías nuevas
+  const nuevas = [...document.querySelectorAll('#ee-cats-egreso [data-id="nueva"][data-activa="true"], #ee-cats-ingreso [data-id="nueva"][data-activa="true"]')];
+  if(nuevas.length) {
+    const rows = nuevas.map(el => ({
+      user_id: user.id,
+      espacio_id: espacioActivo.id,
+      nombre: el.dataset.nombre,
+      tipo: el.dataset.tipo
+    }));
+    const { data } = await sb.from('categorias').insert(rows).select();
+    if(data) allCategorias.push(...data);
+  }
+
+  renderSelectorEspacio();
+  selectTipo(tipoActual);
+
+  document.getElementById('ee-msg-ok').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('ee-msg-ok').style.display = 'none';
+    showTab('dashboard');
+  }, 1500);
 }
 
 async function guardarPresupuesto(categoria, input) {
