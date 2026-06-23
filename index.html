@@ -75,7 +75,7 @@
       font-family: inherit;
       border-top: 2px solid transparent;
     }
-    .tab.active { color: #1a1a1a; border-top-color: #1a1a1a; font-weight: 500; }
+    .tab.active { color: var(--tab-active, #1a1a1a); border-top-color: var(--tab-active, #1a1a1a); font-weight: 500; }
     .tab i { font-size: 20px; }
 
     .content { padding: 16px; }
@@ -86,10 +86,10 @@
     .moneda-btn.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; font-weight: 500; }
 
     /* CARDS */
-    .saldo-card { background: #f8f8f8; border-radius: 16px; padding: 20px; margin-bottom: 14px; }
-    .saldo-label { font-size: 12px; color: #888; margin-bottom: 4px; }
-    .saldo-mes { font-size: 12px; color: #aaa; margin-top: 4px; }
-    .saldo-monto { font-size: 34px; font-weight: 600; color: #1a1a1a; }
+    .saldo-card { background: var(--saldo-bg, #f8f8f8); border-radius: 16px; padding: 20px; margin-bottom: 14px; }
+    .saldo-label { font-size: 12px; color: var(--saldo-sub, #888); margin-bottom: 4px; }
+    .saldo-mes { font-size: 12px; color: var(--saldo-sub, #aaa); margin-top: 4px; }
+    .saldo-monto { font-size: 34px; font-weight: 600; color: var(--saldo-text, #1a1a1a); }
     .saldo-monto.positivo { color: #16a34a; }
     .saldo-monto.negativo { color: #dc2626; }
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
@@ -137,7 +137,7 @@
     .tipo-btn.selected-ingreso { background: #dcfce7; border-color: #16a34a; color: #16a34a; font-weight: 500; }
     .tipo-btn.selected-egreso { background: #fee2e2; border-color: #dc2626; color: #dc2626; font-weight: 500; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .btn-guardar { width: 100%; padding: 14px; background: #1a1a1a; border: none; border-radius: 12px; font-size: 16px; font-weight: 500; cursor: pointer; color: #fff; margin-top: 8px; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-guardar { width: 100%; padding: 14px; background: var(--accent, #1a1a1a); border: none; border-radius: 12px; font-size: 16px; font-weight: 500; cursor: pointer; color: var(--accent-text, #fff); margin-top: 8px; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-guardar:active { transform: scale(0.98); }
     .btn-guardar:disabled { background: #ccc; cursor: not-allowed; }
     .msg-ok { display: none; text-align: center; margin-top: 12px; color: #16a34a; font-size: 14px; }
@@ -732,8 +732,84 @@ function showLogin() {
 
 let appReady = false;
 
+const TEMAS = {
+  claro: {
+    nombre: 'Claro',
+    accent: '#1a1a1a',
+    accentLight: '#f3f4f6',
+    accentText: '#ffffff',
+    saldoBg: '#1a1a1a',
+    saldoText: '#ffffff',
+    saldoSub: '#888888',
+    tabActive: '#1a1a1a'
+  },
+  oscuro: {
+    nombre: 'Oscuro',
+    accent: '#111827',
+    accentLight: '#1f2937',
+    accentText: '#ffffff',
+    saldoBg: '#111827',
+    saldoText: '#ffffff',
+    saldoSub: '#9ca3af',
+    tabActive: '#374151'
+  },
+  musgo: {
+    nombre: 'Verde',
+    accent: '#3d6b52',
+    accentLight: '#d4e6dc',
+    accentText: '#ffffff',
+    saldoBg: '#3d6b52',
+    saldoText: '#ffffff',
+    saldoSub: '#a7c4b5',
+    tabActive: '#3d6b52'
+  },
+  rosa: {
+    nombre: 'Rosa',
+    accent: '#be5b8a',
+    accentLight: '#fce7f3',
+    accentText: '#ffffff',
+    saldoBg: '#be5b8a',
+    saldoText: '#ffffff',
+    saldoSub: '#f9a8d4',
+    tabActive: '#be5b8a'
+  }
+};
+
+const TEMAS_ORDEN = ['claro', 'musgo', 'rosa', 'oscuro'];
+let temaActual = localStorage.getItem('tema') || 'claro';
+
+function aplicarTema(tema) {
+  const t = TEMAS[tema];
+  document.documentElement.style.setProperty('--accent', t.accent);
+  document.documentElement.style.setProperty('--accent-light', t.accentLight);
+  document.documentElement.style.setProperty('--accent-text', t.accentText);
+  document.documentElement.style.setProperty('--saldo-bg', t.saldoBg);
+  document.documentElement.style.setProperty('--saldo-text', t.saldoText);
+  document.documentElement.style.setProperty('--saldo-sub', t.saldoSub);
+  document.documentElement.style.setProperty('--tab-active', t.tabActive);
+
+  if(tema === 'oscuro') {
+    document.body.style.background = '#0f172a';
+    document.body.style.color = '#f1f5f9';
+  } else {
+    document.body.style.background = '';
+    document.body.style.color = '';
+  }
+  temaActual = tema;
+  localStorage.setItem('tema', tema);
+}
+
+function toggleTema() {
+  const idx = TEMAS_ORDEN.indexOf(temaActual);
+  const siguiente = TEMAS_ORDEN[(idx + 1) % TEMAS_ORDEN.length];
+  aplicarTema(siguiente);
+}
+
+
+
 async function initApp() {
   try {
+    aplicarTema(temaActual);
     const { data: { session } } = await sb.auth.getSession();
     if(session) {
       showApp(false);
