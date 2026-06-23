@@ -1059,69 +1059,50 @@ async function agregarTxn() {
 
   const { data: { user } } = await sb.auth.getUser();
   const moneda = document.getElementById('inp-moneda').value;
-  const fecha = document.getElementById('inp-fecha').value || (() => {
-    const h = new Date();
-    return h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0') + '-' + String(h.getDate()).padStart(2,'0');
-  })();
+  const hoy = new Date();
+  const fechaHoy = hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0') + '-' + String(hoy.getDate()).padStart(2,'0');
+  const fecha = document.getElementById('inp-fecha').value || fechaHoy;
 
   const monedaPrincipal = espacioActivo.moneda || '₡';
   const monedaActivaCodigo = allMonedas.find(m => m.simbolo === moneda)?.codigo;
   const monedaPrincipalCodigo = allMonedas.find(m => m.simbolo === monedaPrincipal)?.codigo || 'CRC';
+  const esMonedaExtranjera = moneda !== monedaPrincipal && monedaActivaCodigo !== monedaPrincipalCodigo;
 
-  if(moneda !== monedaPrincipal && monedaActivaCodigo !== monedaPrincipalCodigo) {
+  if(esMonedaExtranjera) {
     const tcExiste = allTc.find(t => t.moneda === monedaActivaCodigo && t.fecha === fecha);
     if(!tcExiste) {
-      // Intentar traer TC automático solo para hoy
-      const hoy = new Date();
-      const fechaHoy = hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0') + '-' + String(hoy.getDate()).padStart(2,'0');
-      
-      if(fecha === fechaHoy) {
-        try {
-          btn.innerHTML = '<i class="ti ti-loader"></i> Obteniendo tipo de cambio...';
-          const res = await fetch('https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/get-tipo-cambio', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${SUPABASE_KEY}`
-            },
-            body: JSON.stringify({ fecha, monedaBase: monedaPrincipalCodigo, monedaDestino: monedaActivaCodigo })
-          });
-          const tc = await res.json();
-          if(tc.compra && tc.venta) {
-            const { data: tcData } = await sb.from('tipo_cambio').insert({
-              user_id: user.id,
-              espacio_id: espacioActivo.id,
-              moneda: monedaActivaCodigo,
-              fecha,
-              valorCompra: tc.compra,
-              valorVenta: tc.venta
-            }).select().single();
-            if(tcData) {
-              allTc.unshift(tcData);
-              allTc.sort((a,b) => b.fecha.localeCompare(a.fecha));
-            }
-          }
-        } catch(e) {
-          console.error('Error obteniendo TC:', e);
-        }
-      } else {
-        // Fecha pasada sin TC — bloquear y avisar
-        const warnEl = document.getElementById('tc-warning');
-        warnEl.textContent = `⚠ No hay tipo de cambio para el ${fecha}. Cargalo manualmente en Config antes de continuar.`;
-        warnEl.style.display = 'block';
+      if(fecha !== fechaHoy) {
+        // Fecha pasada sin TC — bloquear
+        document.getElementById('tc-warning').textContent = `⚠ No hay tipo de cambio para el ${fecha}. Cargalo en Config antes de continuar.`;
+        document.getElementById('tc-warning').style.display = 'block';
         btn.disabled = false;
         btn.innerHTML = '<i class="ti ti-check"></i> Guardar transacción';
         return;
       }
+      // Es hoy — traer automático
+      try {
+        btn.innerHTML = '<i class="ti ti-loader"></i> Obteniendo tipo de cambio...';
+        const res = await fetch('https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/get-tipo-cambio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+          body: JSON.stringify({ fecha, monedaBase: monedaPrincipalCodigo, monedaDestino: monedaActivaCodigo })
+        });
+        const tc = await res.json();
+        if(tc.compra && tc.venta) {
+          const { data: tcData } = await sb.from('tipo_cambio').insert({
+            user_id: user.id, espacio_id: espacioActivo.id,
+            moneda: monedaActivaCodigo, fecha,
+            valorCompra: tc.compra, valorVenta: tc.venta
+          }).select().single();
+          if(tcData) { allTc.unshift(tcData); allTc.sort((a,b) => b.fecha.localeCompare(a.fecha)); }
+        }
+      } catch(e) { console.error('Error TC:', e); }
     }
   }
 
   const txn = {
-    user_id: user.id,
-    espacio_id: espacioActivo.id,
-    tipo: tipoActual,
-    monto,
-    moneda,
+    user_id: user.id, espacio_id: espacioActivo.id,
+    tipo: tipoActual, monto, moneda,
     categoria: document.getElementById('inp-categoria').value,
     nota: document.getElementById('inp-nota').value.trim(),
     fecha
@@ -1136,10 +1117,9 @@ async function agregarTxn() {
     document.getElementById('screen-login').style.display = 'flex';
     return;
   }
-
   if(error) {
-    const err = document.getElementById('msg-err');
-    err.textContent = 'Error: ' + error.message; err.style.display = 'block';
+    document.getElementById('msg-err').textContent = 'Error: ' + error.message;
+    document.getElementById('msg-err').style.display = 'block';
     return;
   }
 
@@ -1151,9 +1131,7 @@ async function agregarTxn() {
   const ok = document.getElementById('msg-ok');
   ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 2500);
   renderDashboard();
-  if(document.getElementById('tab-historial').style.display !== 'none') {
-    populateMesSelector(); renderHistorial();
-  }
+  if(document.getElementById('tab-historial').style.display !== 'none') { populateMesSelector(); renderHistorial(); }
 }
 
 async function deleteTxn(id) {
