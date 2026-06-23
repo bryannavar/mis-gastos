@@ -1086,22 +1086,18 @@ function renderTcHistorial() {
 
 function formatMonto(input) {
   const moneda = document.getElementById('inp-moneda').value;
-  if(moneda === '$') {
-    input.value = input.value.replace(/[^0-9.]/g, '');
-  } else {
-    let raw = input.value.replace(/[^0-9.,]/g, '').replace(',', '.');
-    if(!raw) { input.value = ''; return; }
-    const num = parseFloat(raw);
-    if(isNaN(num)) { input.value = ''; return; }
-    input.value = num.toLocaleString('es-CR');
+  if(moneda !== '₡') {
+    input.value = input.value.replace(/[^0-9.,]/g, '');
   }
+  // Para colones no formateamos — dejamos el valor tal como lo escribe el usuario
 }
 
 function parseMonto() {
   const moneda = document.getElementById('inp-moneda').value;
   const raw = document.getElementById('inp-monto').value;
-  if(moneda === '$') return parseFloat(raw) || 0;
-  return parseFloat(raw.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+  // Normalizar: si tiene coma como decimal (5,40) convertir a punto
+  const normalizado = raw.replace(/\./g, '').replace(',', '.');
+  return parseFloat(normalizado) || 0;
 }
 
 async function agregarTxn() {
