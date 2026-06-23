@@ -1757,7 +1757,11 @@ if('serviceWorker' in navigator) {
 }
 
 // INIT
-document.getElementById('inp-fecha').value = new Date().toISOString().slice(0,10);
+const ahora = new Date();
+const fechaLocal = ahora.getFullYear() + '-' + 
+  String(ahora.getMonth()+1).padStart(2,'0') + '-' + 
+  String(ahora.getDate()).padStart(2,'0');
+document.getElementById('inp-fecha').value = fechaLocal;
 selectTipo('ingreso');
 </script>
 </body>
