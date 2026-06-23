@@ -213,10 +213,11 @@
   </div>
     <div class="tabs">
   		<button class="tab active" onclick="showTab('dashboard')"><i class="ti ti-home"></i> Inicio</button>
- 	 	<button class="tab" onclick="showTab('agregar')"><i class="ti ti-plus"></i> Agregar</button>
-  		<button class="tab" onclick="showTab('presupuesto')"><i class="ti ti-wallet"></i> Presupuesto</button>
-  		<button class="tab" onclick="showTab('historial')"><i class="ti ti-list"></i> Historial</button>
-  		<button class="tab" onclick="showTab('configuracion')"><i class="ti ti-settings"></i> Config</button>
+      <button class="tab" onclick="showTab('agregar')"><i class="ti ti-plus"></i> Agregar</button>
+      <button class="tab" onclick="showTab('fijos')"><i class="ti ti-repeat"></i> Fijos</button>
+      <button class="tab" onclick="showTab('presupuesto')"><i class="ti ti-wallet"></i> Presupuesto</button>
+      <button class="tab" onclick="showTab('historial')"><i class="ti ti-list"></i> Historial</button>
+      <button class="tab" onclick="showTab('configuracion')"><i class="ti ti-settings"></i> Config</button>
 	</div>
   </div>
 
@@ -284,6 +285,46 @@
     </button>
     <div class="msg-ok" id="msg-ok"><i class="ti ti-circle-check"></i> ¡Guardado!</div>
     <div class="msg-err" id="msg-err"></div>
+  </div>
+
+  <!-- FIJOS -->
+  <div class="content" id="tab-fijos" style="display:none">
+    <div class="section-title">Gastos fijos</div>
+    <p style="font-size:13px; color:#888; margin-bottom:16px; line-height:1.6;">Registrá tus gastos recurrentes. Se aplicarán automáticamente cada mes como transacciones reales.</p>
+
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input type="text" id="gf-nombre" placeholder="ej: Netflix, Alquiler, Seguro">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Monto</label>
+        <input type="text" id="gf-monto" placeholder="0" inputmode="numeric" oninput="formatMontoFijo(this)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Moneda</label>
+        <select id="gf-moneda">
+          <option value="₡">₡ Colones</option>
+          <option value="$">$ Dólares</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categoría</label>
+      <select id="gf-categoria"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Día del mes</label>
+      <input type="number" id="gf-dia" placeholder="ej: 1, 5, 15" min="1" max="28">
+    </div>
+    <button class="btn-guardar" onclick="agregarGastoFijo()">
+      <i class="ti ti-check"></i> Guardar gasto fijo
+    </button>
+    <div id="gf-msg-ok" style="display:none; text-align:center; margin-top:12px; color:#16a34a; font-size:14px;"><i class="ti ti-circle-check"></i> ¡Guardado!</div>
+    <div id="gf-msg-err" style="display:none; text-align:center; margin-top:12px; color:#dc2626; font-size:14px;"></div>
+
+    <div class="section-title" style="margin-top:24px;">Gastos fijos registrados</div>
+    <div id="gf-lista"></div>
   </div>
 
 <!-- PRESUPUESTO -->
@@ -450,6 +491,7 @@ let allTc = [];
 let allPresupuestos = [];
 let allEspacios = [];
 let allCategorias = [];
+let allGastosFijos = [];
 let espacioActivo = null;
 
 function fmt(n, moneda) {
@@ -608,13 +650,13 @@ async function loadPresupuestos() {
 async function cargarEspacio(espacio) {
   espacioActivo = espacio;
   monedaActual = espacio.moneda || '₡';
-  await Promise.all([loadTxn(), loadTc(), loadPresupuestos(), loadCategorias()]);
+  await Promise.all([loadTxn(), loadTc(), loadPresupuestos(), loadCategorias(), loadGastosFijos()]);
+  await aplicarGastosFijos();
   renderSelectorEspacio();
   selectTipo(tipoActual);
   renderDashboard();
   showApp(true);
 }
-
 function renderSelectorEspacio() {
   const sel = document.getElementById('sel-espacio');
   if(!sel) return;
@@ -700,6 +742,115 @@ async function deleteTipoCambio(id) {
     renderTcHistorial();
     renderDashboard();
   }
+}
+
+async function loadGastosFijos() {
+  if(!espacioActivo) return;
+  const { data, error } = await sb.from('gastos_fijos').select('*').eq('espacio_id', espacioActivo.id).order('dia_mes', { ascending: true });
+  if(!error && data) allGastosFijos = data;
+}
+
+function formatMontoFijo(input) {
+  const moneda = document.getElementById('gf-moneda').value;
+  if(moneda === '$') {
+    input.value = input.value.replace(/[^0-9.]/g, '');
+  } else {
+    let raw = input.value.replace(/[^0-9]/g, '');
+    if(!raw) { input.value = ''; return; }
+    input.value = parseInt(raw).toLocaleString('es-CR');
+  }
+}
+
+function renderGastosFijos() {
+  const lista = document.getElementById('gf-lista');
+  if(!lista) return;
+  if(!allGastosFijos.length) {
+    lista.innerHTML = '<div class="empty"><i class="ti ti-repeat"></i>Sin gastos fijos registrados</div>';
+    return;
+  }
+  lista.innerHTML = allGastosFijos.map(g => `
+    <div class="txn-item">
+      <div class="txn-icon egreso"><i class="ti ti-repeat"></i></div>
+      <div class="txn-info">
+        <div class="txn-cat">${g.nombre}</div>
+        <div class="txn-nota">${g.categoria} · Día ${g.dia_mes} de cada mes</div>
+      </div>
+      <div class="txn-right">
+        <div class="txn-monto egreso">- ${fmt(g.monto, g.moneda)}</div>
+        <button class="delete-btn" onclick="eliminarGastoFijo('${g.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+async function agregarGastoFijo() {
+  const nombre = document.getElementById('gf-nombre').value.trim();
+  const moneda = document.getElementById('gf-moneda').value;
+  const raw = document.getElementById('gf-monto').value;
+  const monto = moneda === '$' ? parseFloat(raw) : parseFloat(raw.replace(/[^0-9]/g, ''));
+  const categoria = document.getElementById('gf-categoria').value;
+  const dia_mes = parseInt(document.getElementById('gf-dia').value);
+  const errEl = document.getElementById('gf-msg-err');
+
+  if(!nombre) { errEl.textContent = 'Ingresá un nombre'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+  if(!monto || monto <= 0) { errEl.textContent = 'Ingresá un monto válido'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+  if(!dia_mes || dia_mes < 1 || dia_mes > 28) { errEl.textContent = 'Ingresá un día válido (1-28)'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+
+  const { data: { user } } = await sb.auth.getUser();
+  const { data, error } = await sb.from('gastos_fijos').insert({
+    user_id: user.id,
+    espacio_id: espacioActivo.id,
+    nombre, monto, moneda, categoria, dia_mes
+  }).select().single();
+
+  if(error) { errEl.textContent = 'Error: ' + error.message; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+
+  allGastosFijos.push(data);
+  allGastosFijos.sort((a,b) => a.dia_mes - b.dia_mes);
+  document.getElementById('gf-nombre').value = '';
+  document.getElementById('gf-monto').value = '';
+  document.getElementById('gf-dia').value = '';
+  renderGastosFijos();
+  document.getElementById('gf-msg-ok').style.display='block';
+  setTimeout(()=>document.getElementById('gf-msg-ok').style.display='none',2000);
+}
+
+async function eliminarGastoFijo(id) {
+  const { error } = await sb.from('gastos_fijos').delete().eq('id', id);
+  if(!error) {
+    allGastosFijos = allGastosFijos.filter(g => g.id !== id);
+    renderGastosFijos();
+  }
+}
+
+async function aplicarGastosFijos() {
+  if(!espacioActivo || !allGastosFijos.length) return;
+  const { data: { user } } = await sb.auth.getUser();
+  const mes = mesActual();
+  const hoy = new Date();
+
+  for(const g of allGastosFijos) {
+    const fecha = `${mes}-${String(g.dia_mes).padStart(2,'0')}`;
+    // Verificar si ya se aplicó este mes
+    const yaExiste = allTxn.find(t =>
+      t.nota === `__fijo__${g.id}` && t.fecha.startsWith(mes)
+    );
+    if(yaExiste) continue;
+
+    // Solo aplicar si el día ya pasó o es hoy
+    if(g.dia_mes > hoy.getDate()) continue;
+
+    await sb.from('transacciones').insert({
+      user_id: user.id,
+      espacio_id: espacioActivo.id,
+      tipo: 'egreso',
+      monto: g.monto,
+      moneda: g.moneda,
+      categoria: g.categoria,
+      nota: `__fijo__${g.id}`,
+      fecha
+    });
+  }
+  await loadTxn();
 }
 
 function renderTcHistorial() {
@@ -807,7 +958,7 @@ async function deleteTxn(id) {
 
 // UI
 function showTab(t) {
-  ['dashboard','agregar','presupuesto','historial','configuracion','nuevo-espacio','editar-espacio'].forEach(x => {
+  ['dashboard','agregar','fijos','presupuesto','historial','configuracion','nuevo-espacio','editar-espacio'].forEach(x => {
     document.getElementById('tab-'+x).style.display = x===t ? '' : 'none';
   });
   document.querySelectorAll('.tab').forEach((el,i) => {
@@ -817,6 +968,11 @@ function showTab(t) {
   if(t==='nuevo-espacio') { renderCatsNuevoEspacio(); }
   if(t==='editar-espacio') { renderEditarEspacio(); }
   if(t==='presupuesto') { renderPresupuesto(); }
+  if(t==='fijos') { 
+  const sel = document.getElementById('gf-categoria');
+  sel.innerHTML = allCategorias.filter(c=>c.tipo==='egreso').map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
+  renderGastosFijos(); 
+}
   if(t==='configuracion') {
     renderTcHistorial();
     document.getElementById('tc-fecha').value = new Date().toISOString().slice(0,10);
@@ -898,6 +1054,10 @@ function chipCat(nombre, tipo, seleccionada) {
 function toggleCat(el, nombre, tipo) {
   const sel = catsSeleccionadas[tipo];
   if(sel.has(nombre)) {
+    if(sel.size <= 1) {
+      alert(`Debe haber al menos una categoría de ${tipo} seleccionada.`);
+      return;
+    }
     sel.delete(nombre);
     el.style.background = '#fef2f2';
     el.style.color = '#dc2626';
@@ -1137,17 +1297,26 @@ function renderEditarEspacio() {
 function toggleCatEditar(el, id, nombre, tipo) {
   const activa = el.dataset.activa === 'true';
   if(activa) {
+    // Verificar que no sea el último activo
+    const activasDelTipo = [...document.querySelectorAll(`#ee-cats-${tipo} [data-activa="true"]`)];
+    if(activasDelTipo.length <= 1) {
+      const errEl = document.getElementById('ee-msg-err');
+      errEl.textContent = `Debe haber al menos una categoría de ${tipo} activa.`;
+      errEl.style.display = 'block';
+      setTimeout(() => errEl.style.display = 'none', 3000);
+      return;
+    }
     el.dataset.activa = 'false';
     el.style.background = '#fef2f2';
     el.style.color = '#dc2626';
     el.style.borderColor = '#fca5a5';
-    el.querySelector('span').textContent = '✕';
+    el.querySelectorAll('span')[0].textContent = '✕';
   } else {
     el.dataset.activa = 'true';
     el.style.background = '#f0fdf4';
     el.style.color = '#15803d';
     el.style.borderColor = '#86efac';
-    el.querySelector('span').textContent = '✓';
+    el.querySelectorAll('span')[0].textContent = '✓';
   }
 }
 
