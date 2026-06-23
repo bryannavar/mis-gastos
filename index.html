@@ -1155,6 +1155,18 @@ const CATS_SUGERIDAS = {
 let catsSeleccionadas = { egreso: new Set(), ingreso: new Set() };
 
 async function renderCatsNuevoEspacio() {
+
+  // Resetear monedas
+  divisasNuevoEspacio = new Set(['CRC', 'USD']);
+  document.getElementById('ne-moneda').innerHTML = `
+    <option value="₡">₡ Colón costarricense</option>
+    <option value="$">$ Dólar estadounidense</option>
+  `;
+  document.getElementById('ne-monedas-seleccionadas').innerHTML = `
+    <div style="padding:6px 12px; border-radius:20px; font-size:12px; background:#f0fdf4; color:#15803d; border:1px solid #86efac;">✓ ₡ Colón costarricense</div>
+    <div style="padding:6px 12px; border-radius:20px; font-size:12px; background:#f0fdf4; color:#15803d; border:1px solid #86efac;">✓ $ Dólar estadounidense</div>
+  `;
+  
   const tipo = document.getElementById('ne-tipo').value;
   catsSeleccionadas = { egreso: new Set(), ingreso: new Set() };
 
@@ -1186,13 +1198,31 @@ function agregarDivisaNuevoEspacio() {
   if(!divisa || divisasNuevoEspacio.has(codigo)) { input.value = ''; return; }
   
   divisasNuevoEspacio.add(codigo);
+  
+  // Agregar al selector de moneda principal
+  const selMoneda = document.getElementById('ne-moneda');
+  if(selMoneda) {
+    selMoneda.innerHTML += `<option value="${divisa.simbolo}">${divisa.simbolo} ${divisa.nombre}</option>`;
+  }
+
   const contenedor = document.getElementById('ne-monedas-seleccionadas');
   contenedor.insertAdjacentHTML('beforeend', `
     <div style="padding:6px 12px; border-radius:20px; font-size:12px; background:#f0fdf4; color:#15803d; border:1px solid #86efac; display:flex; align-items:center; gap:6px;">
       ✓ ${divisa.simbolo} ${divisa.nombre}
-      <span onclick="quitarDivisaNuevoEspacio(this, '${codigo}')" style="cursor:pointer; color:#dc2626; font-weight:bold;">✕</span>
+      <span onclick="quitarDivisaNuevoEspacio(this, '${codigo}', '${divisa.simbolo}')" style="cursor:pointer; color:#dc2626; font-weight:bold;">✕</span>
     </div>`);
   input.value = '';
+}
+
+function quitarDivisaNuevoEspacio(el, codigo, simbolo) {
+  if(codigo === 'CRC' || codigo === 'USD') return;
+  divisasNuevoEspacio.delete(codigo);
+  // Quitar del selector de moneda principal
+  const selMoneda = document.getElementById('ne-moneda');
+  if(selMoneda) {
+    [...selMoneda.options].forEach(opt => { if(opt.value === simbolo) opt.remove(); });
+  }
+  el.parentElement.remove();
 }
 
 function quitarDivisaNuevoEspacio(el, codigo) {
