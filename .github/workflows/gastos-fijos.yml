@@ -13,5 +13,5 @@ jobs:
         run: |
           curl -X POST \
             https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/aplicar-gastos-fijos \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json"
