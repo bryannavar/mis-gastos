@@ -369,9 +369,14 @@
 </div>
 
   <!-- HISTORIAL -->
-  <div class="content" id="tab-historial" style="display:none">
+<div class="content" id="tab-historial" style="display:none">
   <div class="form-row" style="margin-bottom:14px">
     <select id="sel-mes" onchange="renderHistorial()"></select>
+  </div>
+  <div style="margin-bottom:14px;">
+    <input type="text" id="hist-buscar" placeholder="🔍 Buscar por categoría, nota o monto..." 
+      style="width:100%; padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; font-size:14px; font-family:inherit;"
+      oninput="renderHistorial()">
   </div>
   <div id="historial-list"></div>
   <div class="section-title" style="margin-top:24px;">Presupuesto del mes</div>
@@ -1827,11 +1832,21 @@ async function guardarPresupuesto(categoria, input) {
 }
 
 function renderHistorial() {
-  const mes = document.getElementById('sel-mes') ? document.getElementById('sel-mes').value || mesActual() : mesActual();
-  const d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
+   const mes = document.getElementById('sel-mes') ? document.getElementById('sel-mes').value || mesActual() : mesActual();
+  const buscar = document.getElementById('hist-buscar')?.value.trim().toLowerCase() || '';
+  
+  let d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
+  
+  if(buscar) {
+    d = d.filter(t => 
+      (t.categoria && t.categoria.toLowerCase().includes(buscar)) ||
+      (t.nota && t.nota.toLowerCase().includes(buscar)) ||
+      (t.monto && t.monto.toString().includes(buscar))
+    );
+  }
+  
   const list = document.getElementById('historial-list');
   list.innerHTML = d.length ? d.map(t=>txnHTML(t)).join('') : '<div class="empty"><i class="ti ti-calendar"></i>Sin transacciones este mes</div>';
-
   // Presupuesto del mes
   const egresos = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
   const presupMes = allPresupuestos.filter(p => p.mes === mes);
