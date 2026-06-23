@@ -45,9 +45,38 @@
     .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .header h1 { font-size: 20px; font-weight: 600; color: #1a1a1a; }
     .btn-logout { background: none; border: none; color: #888; font-size: 20px; cursor: pointer; padding: 4px; }
-    .tabs { display: flex; gap: 4px; }
-    .tab { flex: 1; padding: 10px 4px; border: none; border-bottom: 2px solid transparent; background: transparent; font-size: 13px; color: #888; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; font-family: inherit; }
-    .tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; font-weight: 500; }
+    .tabs { 
+      display: flex; 
+      position: fixed; 
+      bottom: 0; 
+      left: 50%; 
+      transform: translateX(-50%);
+      width: 100%; 
+      max-width: 480px; 
+      background: #fff; 
+      border-top: 1px solid #e5e7eb; 
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .tab { 
+      flex: 1; 
+      padding: 10px 4px 8px; 
+      border: none; 
+      background: transparent; 
+      font-size: 11px; 
+      color: #888; 
+      cursor: pointer; 
+      text-align: center; 
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: center; 
+      gap: 3px; 
+      font-family: inherit;
+      border-top: 2px solid transparent;
+    }
+    .tab.active { color: #1a1a1a; border-top-color: #1a1a1a; font-weight: 500; }
+    .tab i { font-size: 20px; }
 
     .content { padding: 16px; }
 
