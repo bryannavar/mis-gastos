@@ -510,25 +510,7 @@ async function initApp() {
 }
 
 async function crearEspacioInicial() {
-  const { data: { user } } = await sb.auth.getUser();
-  const { data, error } = await sb.from('espacios').insert({
-    user_id: user.id,
-    nombre: 'Personal',
-    tipo: 'personal',
-    moneda: '₡'
-  }).select().single();
-  if(!error && data) {
-    allEspacios = [data];
-    // Insertar categorías por defecto
-    const cats = ['Vivienda','Servicios','Alimentación','Transporte','Salud','Educación','Entretenimiento','Suscripciones','Ropa y compras','Deudas','Ahorro e inversión','Otros'].map(nombre => ({
-      user_id: user.id, espacio_id: data.id, nombre, tipo: 'egreso'
-    }));
-    cats.push({ user_id: user.id, espacio_id: data.id, nombre: 'Salario', tipo: 'ingreso' });
-    cats.push({ user_id: user.id, espacio_id: data.id, nombre: 'Servicios Profesionales', tipo: 'ingreso' });
-    cats.push({ user_id: user.id, espacio_id: data.id, nombre: 'Otros ingresos', tipo: 'ingreso' });
-    await sb.from('categorias').insert(cats);
-    await cargarEspacio(data);
-  }
+  showTab('nuevo-espacio');
 }
 
 sb.auth.onAuthStateChange(async (event, session) => {
