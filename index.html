@@ -237,6 +237,7 @@
       </select>
     <button onclick="showTab('editar-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:16px;" title="Editar espacio"><i class="ti ti-pencil"></i></button>
     <button onclick="showTab('nuevo-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:16px;" title="Nuevo espacio">＋</button>
+    <button onclick="showTab('ayuda')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:14px; font-weight:600;" title="Ayuda">?</button>
     <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout"></i></button>
     </div>
   </div>
@@ -354,7 +355,6 @@
     <div id="gf-lista"></div>
   </div>
 
-  <!-- PRESUPUESTO -->
 <!-- PRESUPUESTO -->
 <div class="content" id="tab-presupuesto" style="display:none">
   <div class="section-title">Presupuesto del mes</div>
@@ -519,6 +519,51 @@
     <div id="ee-msg-ok" style="display:none; text-align:center; margin-top:12px; color:#16a34a; font-size:14px;"><i class="ti ti-circle-check"></i> ¡Guardado!</div>
     <div id="ee-msg-err" style="display:none; text-align:center; margin-top:12px; color:#dc2626; font-size:14px;"></div>
   </div>
+
+  <!-- AYUDA -->
+<div class="content" id="tab-ayuda" style="display:none">
+  <div class="section-title">¿Cómo usar Mi Presupuesto?</div>
+
+  <div style="margin-bottom:16px;">
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🏠 Inicio</div>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Muestra el saldo del mes, ingresos, egresos y las últimas transacciones. Todo se consolida en la moneda principal del espacio.</p>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">➕ Agregar</div>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Registrá ingresos y egresos. Si la transacción es en moneda extranjera y es de hoy, el tipo de cambio se obtiene automáticamente. Para fechas pasadas debés cargarlo manualmente en Config.</p>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🔄 Fijos</div>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Registrá gastos que se repiten cada mes (Netflix, alquiler, etc.). Se aplican automáticamente al abrir la app cada mes en el día que definiste.</p>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🎯 Presupuesto</div>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Definí cuánto querés gastar por categoría cada mes. La barra muestra cuánto llevás gastado. Podés importar el presupuesto del mes anterior con un clic.</p>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">📋 Historial</div>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Consultá todas las transacciones de cualquier mes y el resumen del presupuesto de ese período.</p>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">⚙️ Config</div>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Registrá el tipo de cambio manualmente para fechas pasadas. Podés editar o borrar registros existentes.</p>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">📁 Espacios</div>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Creá espacios separados para tu vida personal, negocio o pyme. Cada espacio tiene sus propias transacciones, presupuestos y tipo de cambio. Usá el lápiz ✏️ para editar el espacio activo y el + para crear uno nuevo.</p>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">💱 Tipo de cambio</div>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Para transacciones en dólares con fecha de hoy, el sistema obtiene el tipo de cambio automáticamente desde el Ministerio de Hacienda de Costa Rica. Para otras fechas o monedas, cargalo manualmente en Config.</p>
+  </div>
+</div>
   
   <div style="text-align:center; padding: 20px 16px; border-top: 0.5px solid #e8e8e8; margin-top: 8px;">
     <p style="font-size: 13px; color: #555; margin-bottom: 4px;">🔒 Tu información es 100% privada y confidencial</p>
@@ -1148,7 +1193,7 @@ async function deleteTxn(id) {
 
 // UI
 function showTab(t) {
-  ['dashboard','agregar','fijos','presupuesto','historial','configuracion','nuevo-espacio','editar-espacio'].forEach(x => {
+  ['dashboard','agregar','fijos','presupuesto','historial','configuracion','nuevo-espacio','editar-espacio','ayuda'].forEach(x => {
     const el = document.getElementById('tab-'+x);
     if(el) el.style.display = x===t ? '' : 'none';
   });
@@ -1492,16 +1537,16 @@ let monedaPresupuesto = '₡';
 
 
 function renderPresupuesto() {
-  const labelMoneda = document.getElementById('presupuesto-moneda-label');
-if(labelMoneda) {
-  const monedaInfo = allMonedas.find(m => m.simbolo === moneda);
-  labelMoneda.textContent = monedaInfo ? monedaInfo.nombre : moneda;
-}
   const mes = mesActual();
   const moneda = espacioActivo?.moneda || '₡';
   const monedaCodigo = allMonedas.find(m => m.simbolo === moneda)?.codigo || 'CRC';
-  
-  // Colonizar egresos de otras monedas a la moneda principal
+
+  const labelMoneda = document.getElementById('presupuesto-moneda-label');
+  if(labelMoneda) {
+    const monedaInfo = allMonedas.find(m => m.simbolo === moneda);
+    labelMoneda.textContent = monedaInfo ? monedaInfo.nombre : moneda;
+  }
+
   const delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
   const list = document.getElementById('presupuesto-list');
   if(!list) return;
@@ -1513,7 +1558,6 @@ if(labelMoneda) {
     
     const gastado = delMes.filter(t => t.categoria === cat).reduce((s, t) => {
       if(t.moneda === moneda) return s + t.monto;
-      // Convertir a moneda principal usando TC
       const tMonedaCodigo = allMonedas.find(m => m.simbolo === t.moneda)?.codigo;
       const tc = tMonedaCodigo ? getTc(tMonedaCodigo, t.fecha, 'venta') : null;
       return s + (tc ? t.monto * tc : 0);
@@ -1540,7 +1584,8 @@ if(labelMoneda) {
           <span>${pct}%</span>
         </div>
         <div style="background:#f3f4f6; border-radius:99px; height:8px;">
-<div style="width:${Math.min(pct, 100)}%; background:${color}; border-radius:99px; height:8px; transition:width 0.3s;"></div>        </div>
+          <div style="width:${Math.min(pct, 100)}%; background:${color}; border-radius:99px; height:8px; transition:width 0.3s;"></div>
+        </div>
       ` : '<div style="font-size:11px; color:#ccc;">Sin presupuesto definido</div>'}
     </div>`;
   }).join('');
