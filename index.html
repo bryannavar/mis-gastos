@@ -1048,10 +1048,12 @@ async function agregarTxn() {
   const moneda = document.getElementById('inp-moneda').value;
   const fecha = document.getElementById('inp-fecha').value || new Date().toISOString().slice(0,10);
 
-  // Si es moneda extranjera, verificar TC y traerlo si no existe
-  if(moneda !== '₡') {
-    const codigo = simboloACodigoTc(moneda);
-    const tcExiste = allTc.find(t => t.moneda === codigo && t.fecha === fecha);
+  const monedaPrincipal = espacioActivo.moneda || '₡';
+  const monedaActivaCodigo = allMonedas.find(m => m.simbolo === moneda)?.codigo;
+  const monedaPrincipalCodigo = allMonedas.find(m => m.simbolo === monedaPrincipal)?.codigo || 'CRC';
+
+  if(moneda !== monedaPrincipal && monedaActivaCodigo !== monedaPrincipalCodigo) {
+    const tcExiste = allTc.find(t => t.moneda === monedaActivaCodigo && t.fecha === fecha);
     if(!tcExiste) {
       try {
         btn.innerHTML = '<i class="ti ti-loader"></i> Obteniendo tipo de cambio...';
@@ -1061,14 +1063,18 @@ async function agregarTxn() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${SUPABASE_KEY}`
           },
-          body: JSON.stringify({ fecha })
+          body: JSON.stringify({ 
+            fecha,
+            monedaBase: monedaPrincipalCodigo,
+            monedaDestino: monedaActivaCodigo
+          })
         });
         const tc = await res.json();
         if(tc.compra && tc.venta) {
           const { data: tcData } = await sb.from('tipo_cambio').insert({
             user_id: user.id,
             espacio_id: espacioActivo.id,
-            moneda: codigo,
+            moneda: monedaActivaCodigo,
             fecha,
             valorCompra: tc.compra,
             valorVenta: tc.venta
