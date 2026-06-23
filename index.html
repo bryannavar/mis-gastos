@@ -355,15 +355,10 @@
   </div>
 
 <!-- PRESUPUESTO -->
-<div class="content" id="tab-presupuesto" style="display:none">
-  <div class="section-title">Presupuesto del mes</div>
-  <p style="font-size:13px; color:#888; margin-bottom:16px; line-height:1.6;">Definí cuánto querés gastar por categoría este mes.</p>
-  <div class="moneda-toggle" style="margin-bottom:20px;">
+<div class="moneda-toggle" style="margin-bottom:20px;">
     <button class="moneda-btn active" id="pbtn-colon" onclick="setMonedaPresupuesto('₡')">₡ Colones</button>
     <button class="moneda-btn" id="pbtn-dolar" onclick="setMonedaPresupuesto('$')">$ Dólares</button>
   </div>
-  <div id="presupuesto-list"></div>
-</div>
 	
   <!-- HISTORIAL -->
   <div class="content" id="tab-historial" style="display:none">
@@ -1687,10 +1682,10 @@ async function guardarEdicionEspacio() {
 async function guardarPresupuesto(categoria, input) {
   const monto = parseFloat(input.value) || 0;
   const mes = mesActual();
-  const moneda = monedaPresupuesto;
+  const moneda = espacioActivo?.moneda || '₡';
   const { data: { user } } = await sb.auth.getUser();
 
-  const existe = allPresupuestos.find(p => p.categoria === categoria && p.mes === mes && p.moneda === moneda);
+  const existe = allPresupuestos.find(p => p.categoria === categoria && p.mes === mes);
   if(existe) {
     if(monto === 0) {
       await sb.from('presupuestos').delete().eq('id', existe.id);
@@ -1701,12 +1696,8 @@ async function guardarPresupuesto(categoria, input) {
     }
   } else if(monto > 0) {
     const { data, error } = await sb.from('presupuestos').insert({ 
-      user_id: user.id, 
-      espacio_id: espacioActivo.id,
-      categoria, 
-      monto, 
-      mes, 
-      moneda 
+      user_id: user.id, espacio_id: espacioActivo.id,
+      categoria, monto, mes, moneda
     }).select().single();
     if(!error && data) allPresupuestos.push(data);
   }
