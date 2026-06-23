@@ -1499,7 +1499,7 @@ function renderPresupuesto() {
     }, 0);
 
     const limite = presup ? presup.monto : 0;
-    const pct = limite > 0 ? Math.min(Math.round(gastado / limite * 100), 100) : 0;
+    const pct = limite > 0 ? Math.round(gastado / limite * 100) : 0;
     const color = pct >= 100 ? '#dc2626' : pct >= 80 ? '#f59e0b' : '#10b981';
 
     return `<div style="margin-bottom:20px;">
@@ -1519,8 +1519,7 @@ function renderPresupuesto() {
           <span>${pct}%</span>
         </div>
         <div style="background:#f3f4f6; border-radius:99px; height:8px;">
-          <div style="width:${pct}%; background:${color}; border-radius:99px; height:8px; transition:width 0.3s;"></div>
-        </div>
+<div style="width:${Math.min(pct, 100)}%; background:${color}; border-radius:99px; height:8px; transition:width 0.3s;"></div>        </div>
       ` : '<div style="font-size:11px; color:#ccc;">Sin presupuesto definido</div>'}
     </div>`;
   }).join('');
