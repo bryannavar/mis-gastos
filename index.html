@@ -1071,32 +1071,30 @@ async function agregarTxn() {
   if(esMonedaExtranjera) {
     const tcExiste = allTc.find(t => t.moneda === monedaActivaCodigo && t.fecha === fecha);
     if(!tcExiste) {
-      if(fecha !== fechaHoy) {
-        // Fecha pasada sin TC — bloquear
-        document.getElementById('tc-warning').textContent = `⚠ No hay tipo de cambio para el ${fecha}. Cargalo en Config antes de continuar.`;
+      if(fecha === fechaHoy) {
+        // Es hoy — traer automático
+        try {
+          btn.innerHTML = '<i class="ti ti-loader"></i> Obteniendo tipo de cambio...';
+          const res = await fetch('https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/get-tipo-cambio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+            body: JSON.stringify({ fecha, monedaBase: monedaPrincipalCodigo, monedaDestino: monedaActivaCodigo })
+          });
+          const tc = await res.json();
+          if(tc.compra && tc.venta) {
+            const { data: tcData } = await sb.from('tipo_cambio').insert({
+              user_id: user.id, espacio_id: espacioActivo.id,
+              moneda: monedaActivaCodigo, fecha,
+              valorCompra: tc.compra, valorVenta: tc.venta
+            }).select().single();
+            if(tcData) { allTc.unshift(tcData); allTc.sort((a,b) => b.fecha.localeCompare(a.fecha)); }
+          }
+        } catch(e) { console.error('Error TC:', e); }
+      } else {
+        // Fecha pasada — avisar pero continuar
+        document.getElementById('tc-warning').textContent = `⚠ No hay tipo de cambio para el ${fecha}. La transacción se guardó pero debés cargar el TC en Config para que los totales sean correctos.`;
         document.getElementById('tc-warning').style.display = 'block';
-        btn.disabled = false;
-        btn.innerHTML = '<i class="ti ti-check"></i> Guardar transacción';
-        return;
       }
-      // Es hoy — traer automático
-      try {
-        btn.innerHTML = '<i class="ti ti-loader"></i> Obteniendo tipo de cambio...';
-        const res = await fetch('https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/get-tipo-cambio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
-          body: JSON.stringify({ fecha, monedaBase: monedaPrincipalCodigo, monedaDestino: monedaActivaCodigo })
-        });
-        const tc = await res.json();
-        if(tc.compra && tc.venta) {
-          const { data: tcData } = await sb.from('tipo_cambio').insert({
-            user_id: user.id, espacio_id: espacioActivo.id,
-            moneda: monedaActivaCodigo, fecha,
-            valorCompra: tc.compra, valorVenta: tc.venta
-          }).select().single();
-          if(tcData) { allTc.unshift(tcData); allTc.sort((a,b) => b.fecha.localeCompare(a.fecha)); }
-        }
-      } catch(e) { console.error('Error TC:', e); }
     }
   }
 
@@ -1127,7 +1125,6 @@ async function agregarTxn() {
   document.getElementById('inp-monto').value = '';
   document.getElementById('inp-nota').value = '';
   document.getElementById('msg-err').style.display = 'none';
-  document.getElementById('tc-warning').style.display = 'none';
   const ok = document.getElementById('msg-ok');
   ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 2500);
   renderDashboard();
