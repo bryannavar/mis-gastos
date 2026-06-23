@@ -570,7 +570,9 @@ async function cargarEspacio(espacio) {
   monedaActual = espacio.moneda || '₡';
   await Promise.all([loadTxn(), loadTc(), loadPresupuestos(), loadCategorias()]);
   renderSelectorEspacio();
+  selectTipo(tipoActual);
   renderDashboard();
+  showApp(true);
 }
 
 function renderSelectorEspacio() {
