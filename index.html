@@ -1194,8 +1194,7 @@ function txnHTML(t) {
     const monedaNombre = allMonedas.find(m => m.simbolo === t.moneda)?.nombre || t.moneda;
     const tc = monedaCodigo ? getTc(monedaCodigo, t.fecha, tipoTc) : null;
     if(tc && tc > 0) {
-      equiv = `<div style="font-size:11px;color:#999;margin-top:2px;">≈ ${signo} ${fmt(t.monto * tc, monedaPrincipal)} <span style="color:#bbb;">(1 ${t.moneda} = ${fmt(tc, monedaPrincipal)})</span></div>`;
-    }
+    equiv = `<div style="font-size:11px;color:#999;margin-top:2px;">≈ ${signo} ${fmt(t.monto * tc, monedaPrincipal)} <span style="color:#bbb;">${monedaNombre}</span></div>`;    }
   }
 
   return `<div class="txn-item">
