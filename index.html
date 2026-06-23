@@ -607,6 +607,17 @@ function fmt(n, moneda) {
   }
 }
 
+let perfilUsuario = null;
+
+async function loadPerfil() {
+  const { data, error } = await sb.from('profiles').select('*').single();
+  if(!error && data) perfilUsuario = data;
+}
+
+function esFounder() {
+  return perfilUsuario?.plan === 'founder';
+}
+
 async function loadMonedas() {
   if(!espacioActivo) return;
   const { data, error } = await sb.from('monedas_espacio').select('*').eq('espacio_id', espacioActivo.id).order('created_at', { ascending: true });
@@ -732,7 +743,7 @@ async function initApp() {
     const { data: { session } } = await sb.auth.getSession();
     if(session) {
       showApp(false);
-      await loadEspacios();
+      await Promise.all([loadEspacios(), loadPerfil()]);
       if(allEspacios.length === 0) {
         await crearEspacioInicial();
       } else {
@@ -749,6 +760,12 @@ async function initApp() {
 }
 
 async function crearEspacioInicial() {
+  const { data: { user } } = await sb.auth.getUser();
+  
+  // Crear perfil si no existe
+  await sb.from('profiles').upsert({ id: user.id, plan: 'free' }, { onConflict: 'id', ignoreDuplicates: true });
+  await loadPerfil();
+
   showTab('nuevo-espacio');
 }
 
@@ -1413,6 +1430,14 @@ async function crearEspacio() {
   const tipo = document.getElementById('ne-tipo').value;
   const moneda = document.getElementById('ne-moneda').value;
   const errEl = document.getElementById('ne-msg-err');
+
+  // Límite de espacios según plan
+  if(allEspacios.length >= (perfilUsuario?.espacios_permitidos || 2)) {
+    errEl.textContent = 'Alcanzaste el límite de espacios. Contactá al soporte para ampliar tu plan.';
+    errEl.style.display = 'block';
+    setTimeout(()=>errEl.style.display='none', 3000);
+    return;
+  }
 
   if(!nombre) {
     errEl.textContent = 'Ingresá un nombre para el espacio';
