@@ -1466,12 +1466,10 @@ function showTab(t) {
   if(t==='nuevo-espacio') { renderCatsNuevoEspacio(); }
   if(t==='editar-espacio') { renderEditarEspacio(); }
   if(t==='presupuesto') { renderPresupuesto(); }
-  if(t==='configuracion') {
-  renderTcHistorial();
-  renderConfigEspacios();
-  document.getElementById('tc-fecha').value = new Date().toISOString().slice(0,10);
-  document.getElementById('tc-buscar-fecha').value = new Date().toISOString().slice(0,10);
-}
+if(t==='configuracion') {
+    renderTcHistorial();
+    document.getElementById('tc-fecha').value = new Date().toISOString().slice(0,10);
+  }
   if(t==='fijos') {
     const sel = document.getElementById('gf-categoria');
     sel.innerHTML = allCategorias.filter(c=>c.tipo==='egreso').map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
