@@ -1064,8 +1064,12 @@ function renderSelectorEspacio() {
     .filter(e => !e.oculto)
     .map(e => `<option value="${e.id}" ${espacioActivo && e.id === espacioActivo.id ? 'selected' : ''}>${e.nombre}</option>`)
     .join('');
-  const nombreEl = document.getElementById('espacio-nombre-header');
-  if(nombreEl && espacioActivo) nombreEl.textContent = espacioActivo.nombre;
+ const nombreEl = document.getElementById('espacio-nombre-header');
+if(nombreEl && espacioActivo) {
+  const tipoPeriodo = espacioActivo.tipo_periodo || 'mensual';
+  const labelPeriodo = tipoPeriodo === 'anual' ? 'Anual' : tipoPeriodo === 'especifico' ? 'Período específico' : 'Mensual';
+  nombreEl.innerHTML = `${espacioActivo.nombre} <span style="font-size:10px; color:#888; font-weight:400;">${labelPeriodo}</span>`;
+}
 }
 
 async function ocultarEspacio(id) {
@@ -1393,7 +1397,7 @@ function renderConfigEspacios() {
       <div class="txn-icon ingreso" style="font-size:18px;">📁</div>
       <div class="txn-info">
         <div class="txn-cat">${e.nombre} ${e.oculto ? '<span style="font-size:10px;background:#f3f4f6;padding:2px 6px;border-radius:10px;color:#888;">Oculto</span>' : ''}</div>
-        <div class="txn-fecha">${e.tipo} · ${e.moneda}</div>
+        <div class="txn-fecha">${e.tipo} · ${e.moneda} · ${e.tipo_periodo === 'mensual' ? 'Mensual' : e.tipo_periodo === 'anual' ? 'Anual' : 'Período específico'}</div>
       </div>
       <div class="txn-right" style="gap:4px;">
         <button onclick="${e.oculto ? `mostrarEspacio('${e.id}')` : `ocultarEspacio('${e.id}')`}" 
