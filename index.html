@@ -255,7 +255,7 @@
   <div class="content" id="tab-dashboard">
     <div id="tc-warning" style="display:none; background:#fef3c7; border:1px solid #f59e0b; border-radius:10px; padding:12px 16px; margin-bottom:14px; font-size:13px; color:#92400e; line-height:1.5;"></div>
     <div class="saldo-card">
-      <div class="saldo-label">Saldo del mes (<span id="saldo-moneda-label">₡</span>)</div>
+      <div class="saldo-label">Saldo del <span id="saldo-periodo-tipo">mes</span> (<span id="saldo-moneda-label">₡</span>)</div>
       <div class="saldo-monto" id="saldo-main">₡0</div>
       <div class="saldo-mes" id="saldo-mes-label"></div>
     </div>
@@ -1766,7 +1766,10 @@ async function crearEspacio() {
 
   // Insertar monedas seleccionadas
   const monedasRows = [...divisasNuevoEspacio].map(codigo => {
-    const divisa = todasLasDivisas.find(d => d.codigo === codigo) || { simbolo: codigo, nombre: codigo };
+    const divisa = todasLasDivisas.find(d => d.codigo === codigo) || 
+  (codigo === 'CRC' ? { simbolo: '₡', nombre: 'Colón costarricense' } :
+   codigo === 'USD' ? { simbolo: '$', nombre: 'Dólar estadounidense' } :
+   { simbolo: codigo, nombre: codigo });
     return { user_id: user.id, espacio_id: espacio.id, codigo, simbolo: divisa.simbolo, nombre: divisa.nombre };
   });
   await sb.from('monedas_espacio').insert(monedasRows);
@@ -1798,10 +1801,22 @@ function simboloACodigoTc(simbolo) {
 
 function renderDashboard() {
   const mes = mesActual();
-  const finMes = mes + '-31';
-  const delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
   const monedaPrincipal = espacioActivo?.moneda || '₡';
   const monedaPrincipalCodigo = allMonedas.find(m => m.simbolo === monedaPrincipal)?.codigo || 'CRC';
+  const tipoPeriodo = espacioActivo?.tipo_periodo || 'mensual';
+
+  // Filtrar transacciones según período
+  let delMes = [];
+  if(tipoPeriodo === 'anual') {
+    const anio = new Date().getFullYear().toString();
+    delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(anio));
+  } else if(tipoPeriodo === 'especifico') {
+    const inicio = espacioActivo.periodo_inicio;
+    const fin = espacioActivo.periodo_fin;
+    delMes = allTxn.filter(t => t.fecha && t.fecha >= inicio && t.fecha <= fin);
+  } else {
+    delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
+  }
 
   // Transacciones en moneda principal
   const dPrincipal = delMes.filter(t => t.moneda === monedaPrincipal);
@@ -1835,7 +1850,26 @@ function renderDashboard() {
   document.getElementById('label-ingresos').textContent = `Ingresos ${monedaPrincipal}`;
   document.getElementById('label-egresos').textContent = `Egresos ${monedaPrincipal}`;
   document.getElementById('saldo-moneda-label').textContent = monedaPrincipal;
-  document.getElementById('saldo-mes-label').textContent = mesLabel(mes);
+
+  // Label del período
+  const periodoTipoEl = document.getElementById('saldo-periodo-tipo');
+  if(periodoTipoEl) {
+    if(tipoPeriodo === 'anual') periodoTipoEl.textContent = 'año';
+    else if(tipoPeriodo === 'especifico') periodoTipoEl.textContent = 'período';
+    else periodoTipoEl.textContent = 'mes';
+  }
+
+  let labelFecha = '';
+  if(tipoPeriodo === 'anual') {
+    labelFecha = new Date().getFullYear().toString();
+  } else if(tipoPeriodo === 'especifico') {
+    const inicio = espacioActivo.periodo_inicio;
+    const fin = espacioActivo.periodo_fin;
+    labelFecha = `${new Date(inicio+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short'})} — ${new Date(fin+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'})}`;
+  } else {
+    labelFecha = mesLabel(mes);
+  }
+  document.getElementById('saldo-mes-label').textContent = labelFecha;
   document.getElementById('stats-otras-monedas').innerHTML = '';
 
   const sm = document.getElementById('saldo-main');
