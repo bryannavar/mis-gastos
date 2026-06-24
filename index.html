@@ -1019,6 +1019,9 @@ async function cargarEspacio(espacio) {
   showApp(true);
   actualizarTabs();
   renderSelectorMoneda();
+  if(document.getElementById('tab-presupuesto').style.display !== 'none') {
+  renderPresupuesto();
+}
 }
 
 function actualizarTabs() {
