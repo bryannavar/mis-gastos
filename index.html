@@ -232,14 +232,16 @@
   <div class="header">
     <div class="header-top">
     <h1><i class="ti ti-wallet" aria-hidden="true" style="margin-right:6px;vertical-align:-3px"></i>Mi Presupuesto</h1>
-    <div style="display:flex; align-items:center; gap:8px;">
-      <select id="sel-espacio" onchange="cambiarEspacio(this.value)" style="border:1px solid #e5e7eb; border-radius:8px; padding:5px 10px; font-size:13px; font-family:inherit; background:#f9fafb; color:#374151; cursor:pointer;">
-      </select>
-    <button onclick="showTab('editar-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:16px;" title="Editar espacio"><i class="ti ti-pencil"></i></button>
-    <button onclick="showTab('nuevo-espacio')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:16px;" title="Nuevo espacio">＋</button>
-    <button onclick="showTab('ayuda')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:14px; font-weight:600;" title="Ayuda">?</button>
-    <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout"></i></button>
-    </div>
+   <div style="display:flex; align-items:center; gap:6px;">
+  <div style="display:flex; align-items:center; gap:6px;" id="header-btns">
+    <select id="sel-espacio" ...></select>
+    <button onclick="showApp(false); showTab('editar-espacio');" ...>
+    <button onclick="showApp(false); showTab('nuevo-espacio');" ...>
+    <button onclick="toggleTema()" ...>
+    <button onclick="showTab('ayuda')" ...>
+  </div>
+  <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout" style="font-size:15px;"></i></button>
+</div>
   </div>
     <div class="tabs">
   		<button class="tab active" onclick="showTab('dashboard')"><i class="ti ti-home"></i> Inicio</button>
@@ -908,9 +910,11 @@ function showApp(tieneEspacio = true) {
   document.getElementById('screen-loading').style.display = 'none';
   document.getElementById('screen-login').style.display = 'none';
   document.getElementById('screen-app').style.display = 'block';
-  // Ocultar tabs y selector si no tiene espacio aún
   document.querySelector('.tabs').style.display = tieneEspacio ? '' : 'none';
   document.getElementById('sel-espacio').style.display = tieneEspacio ? '' : 'none';
+  // Ocultar botones de header cuando no hay espacio
+  const headerBtns = document.getElementById('header-btns');
+  if(headerBtns) headerBtns.style.display = tieneEspacio ? '' : 'none';
 }
 function showLogin() {
   document.getElementById('screen-loading').style.display = 'none';
