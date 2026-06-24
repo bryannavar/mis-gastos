@@ -1008,7 +1008,14 @@ async function cargarEspacio(espacio) {
   selectTipo(tipoActual);
   renderDashboard();
   showApp(true);
+  actualizarTabs();
   renderSelectorMoneda();
+}
+
+function actualizarTabs() {
+  const tipoPeriodo = espacioActivo?.tipo_periodo || 'mensual';
+  const tabFijos = document.querySelector('[onclick="showTab(\'fijos\')"]');
+  if(tabFijos) tabFijos.style.display = tipoPeriodo === 'mensual' ? '' : 'none';
 }
 
 function renderSelectorMoneda() {
