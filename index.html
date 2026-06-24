@@ -2334,13 +2334,13 @@ async function guardarPresupuesto(categoria, input, periodoKey) {
 }
 
 function renderHistorial() {
-  const tituloHist = document.getElementById('historial-presupuesto-titulo');
-if(tituloHist) {
-  if(tipoPeriodo === 'anual') tituloHist.textContent = 'Presupuesto del año';
-  else if(tipoPeriodo === 'especifico') tituloHist.textContent = 'Presupuesto del período';
-  else tituloHist.textContent = 'Presupuesto del mes';
-}
   const tipoPeriodo = espacioActivo?.tipo_periodo || 'mensual';
+  const tituloHist = document.getElementById('historial-presupuesto-titulo');
+  if(tituloHist) {
+    if(tipoPeriodo === 'anual') tituloHist.textContent = 'Presupuesto del año';
+    else if(tipoPeriodo === 'especifico') tituloHist.textContent = 'Presupuesto del período';
+    else tituloHist.textContent = 'Presupuesto del mes';
+  }
   const buscar = document.getElementById('hist-buscar')?.value.trim().toLowerCase() || '';
   const monedaPrincipal = espacioActivo?.moneda || '₡';
 
