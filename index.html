@@ -416,6 +416,55 @@
     <div id="tc-historial"></div>
   </div>
 
+  <!-- PLANES -->
+<div class="content" id="tab-planes" style="display:none">
+  <div class="section-title">Ampliá tu plan</div>
+  <p style="font-size:13px; color:#888; margin-bottom:20px; line-height:1.6;">Alcanzaste el límite de espacios de tu plan actual. Elegí un plan para continuar.</p>
+
+  <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
+    <div style="border:1px solid #e5e7eb; border-radius:14px; padding:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-size:15px; font-weight:600;">Plan Básico</div>
+        <div style="font-size:16px; font-weight:700; color:#16a34a;">₡2.500</div>
+      </div>
+      <div style="font-size:13px; color:#555;">+5 espacios adicionales</div>
+    </div>
+
+    <div style="border:2px solid #1a1a1a; border-radius:14px; padding:16px; position:relative;">
+      <div style="position:absolute; top:-10px; left:16px; background:#1a1a1a; color:#fff; font-size:10px; font-weight:600; padding:2px 10px; border-radius:99px;">MÁS POPULAR</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-size:15px; font-weight:600;">Plan Pro</div>
+        <div style="font-size:16px; font-weight:700; color:#16a34a;">₡4.000</div>
+      </div>
+      <div style="font-size:13px; color:#555;">+10 espacios adicionales</div>
+    </div>
+
+    <div style="border:1px solid #e5e7eb; border-radius:14px; padding:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-size:15px; font-weight:600;">Plan Empresa</div>
+        <div style="font-size:16px; font-weight:700; color:#16a34a;">₡10.000</div>
+      </div>
+      <div style="font-size:13px; color:#555;">+1000 espacios adicionales</div>
+    </div>
+  </div>
+
+  <div style="background:#f8f8f8; border-radius:14px; padding:16px; margin-bottom:16px;">
+    <div style="font-size:13px; font-weight:600; margin-bottom:8px;">¿Cómo comprar?</div>
+    <ol style="font-size:13px; color:#555; line-height:1.8; padding-left:18px; margin:0;">
+      <li>Enviá tu pago por SINPE Móvil al <strong>8449-4238</strong></li>
+      <li>En el mensaje indicá tu correo y el plan elegido</li>
+      <li>En menos de 24 horas activamos tu plan</li>
+    </ol>
+  </div>
+
+  <button onclick="copiarSINPE()" style="width:100%; padding:14px; background:#1a1a1a; border:none; border-radius:12px; font-size:15px; font-weight:500; cursor:pointer; color:#fff; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px;">
+    <i class="ti ti-copy"></i> Copiar número SINPE
+  </button>
+  <button onclick="showTab('nuevo-espacio')" style="width:100%; padding:14px; background:#f3f4f6; border:none; border-radius:12px; font-size:15px; cursor:pointer; color:#555; font-family:inherit; margin-top:8px;">
+    Volver
+  </button>
+</div>
+
   <!-- NUEVO ESPACIO -->
   <div class="content" id="tab-nuevo-espacio" style="display:none">
     <div class="section-title">Nuevo espacio</div>
@@ -612,6 +661,12 @@ let perfilUsuario = null;
 async function loadPerfil() {
   const { data, error } = await sb.from('profiles').select('*').single();
   if(!error && data) perfilUsuario = data;
+}
+
+function copiarSINPE() {
+  navigator.clipboard.writeText('84494238').then(() => {
+    alert('Número copiado: 84494238');
+  });
 }
 
 function esFounder() {
@@ -1230,7 +1285,7 @@ async function deleteTxn(id) {
 
 // UI
 function showTab(t) {
-  ['dashboard','agregar','fijos','presupuesto','historial','configuracion','nuevo-espacio','editar-espacio','ayuda'].forEach(x => {
+  ['dashboard','agregar','fijos','presupuesto','historial','configuracion','nuevo-espacio','editar-espacio','ayuda','planes'].forEach(x => {
     const el = document.getElementById('tab-'+x);
     if(el) el.style.display = x===t ? '' : 'none';
   });
@@ -1433,9 +1488,7 @@ async function crearEspacio() {
 
   // Límite de espacios según plan
   if(allEspacios.length >= (perfilUsuario?.espacios_permitidos || 2)) {
-    errEl.textContent = 'Alcanzaste el límite de espacios. Contactá al soporte para ampliar tu plan.';
-    errEl.style.display = 'block';
-    setTimeout(()=>errEl.style.display='none', 3000);
+    showTab('planes');
     return;
   }
 
