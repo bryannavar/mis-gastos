@@ -2602,7 +2602,7 @@ function descargarReporte() {
     </tr>`;
   }).join('');
 
-  const txnRows = transacciones.slice(0,50).map(t => {
+  const txnRows = transacciones.map(t => {
     function fmtMoneda(monto, moneda) {
       if(moneda === '₡') return `₡${Math.abs(Math.round(monto)).toLocaleString('es-CR')}`;
       return `${moneda}${Math.abs(monto).toLocaleString('es-CR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -2650,7 +2650,7 @@ function descargarReporte() {
   ${presupuestos.length ? `<h2>Presupuesto vs Real</h2>
   <table><thead><tr><th>Categoría</th><th style="text-align:right">Presupuestado</th><th style="text-align:right">Ejecutado</th><th style="text-align:right">%</th></tr></thead>
   <tbody>${presupRows}</tbody></table>` : ''}
-  ${transacciones.length ? `<h2>Transacciones${transacciones.length>50?' (primeras 50)':''}</h2>
+  ${transacciones.length ? `<h2>Transacciones (${transacciones.length})</h2>
   <table><thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th style="text-align:right">Monto</th></tr></thead>
   <tbody>${txnRows}</tbody></table>` : ''}
   <footer>Generado por <strong>Mi Presupuesto</strong> · mipresupuestocr.com · ${new Date().toLocaleDateString('es-CR',{day:'numeric',month:'long',year:'numeric'})}</footer>
