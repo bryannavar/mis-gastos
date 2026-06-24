@@ -986,9 +986,33 @@ function renderSelectorMoneda() {
 function renderSelectorEspacio() {
   const sel = document.getElementById('sel-espacio');
   if(!sel) return;
-  sel.innerHTML = allEspacios.map(e => 
-    `<option value="${e.id}" ${espacioActivo && e.id === espacioActivo.id ? 'selected' : ''}>${e.nombre}</option>`
-  ).join('');
+  sel.innerHTML = allEspacios
+    .filter(e => !e.oculto)
+    .map(e => `<option value="${e.id}" ${espacioActivo && e.id === espacioActivo.id ? 'selected' : ''}>${e.nombre}</option>`)
+    .join('');
+  const nombreEl = document.getElementById('espacio-nombre-header');
+  if(nombreEl && espacioActivo) nombreEl.textContent = espacioActivo.nombre;
+}
+
+async function ocultarEspacio(id) {
+  await sb.from('espacios').update({ oculto: true }).eq('id', id);
+  const e = allEspacios.find(e => e.id === id);
+  if(e) e.oculto = true;
+  // Si es el activo, cambiar a otro
+  if(espacioActivo?.id === id) {
+    const visible = allEspacios.find(e => !e.oculto);
+    if(visible) await cargarEspacio(visible);
+  }
+  renderSelectorEspacio();
+  renderConfigEspacios();
+}
+
+async function mostrarEspacio(id) {
+  await sb.from('espacios').update({ oculto: false }).eq('id', id);
+  const e = allEspacios.find(e => e.id === id);
+  if(e) e.oculto = false;
+  renderSelectorEspacio();
+  renderConfigEspacios();
 }
 
 async function cargarTodasLasDivisas() {
@@ -1289,15 +1313,17 @@ function renderConfigEspacios() {
   const list = document.getElementById('config-espacios-list');
   if(!list) return;
   list.innerHTML = allEspacios.map(e => `
-    <div class="txn-item">
+    <div class="txn-item" style="${e.oculto ? 'opacity:0.5;' : ''}">
       <div class="txn-icon ingreso" style="font-size:18px;">📁</div>
       <div class="txn-info">
-        <div class="txn-cat">${e.nombre}</div>
+        <div class="txn-cat">${e.nombre} ${e.oculto ? '<span style="font-size:10px;background:#f3f4f6;padding:2px 6px;border-radius:10px;color:#888;">Oculto</span>' : ''}</div>
         <div class="txn-fecha">${e.tipo} · ${e.moneda}</div>
       </div>
       <div class="txn-right" style="gap:4px;">
-        <button onclick="ocultarEspacio('${e.id}')" style="background:#f3f4f6; border:none; border-radius:8px; padding:5px 7px; cursor:pointer;" title="Ocultar">
-          <i class="ti ti-eye-off" style="font-size:14px;"></i>
+        <button onclick="${e.oculto ? `mostrarEspacio('${e.id}')` : `ocultarEspacio('${e.id}')`}" 
+          style="background:#f3f4f6; border:none; border-radius:8px; padding:5px 7px; cursor:pointer;" 
+          title="${e.oculto ? 'Mostrar' : 'Ocultar'}">
+          <i class="ti ti-eye${e.oculto ? '' : '-off'}" style="font-size:14px;"></i>
         </button>
         <button onclick="eliminarEspacio('${e.id}', '${e.nombre}')" class="delete-btn"><i class="ti ti-trash"></i></button>
       </div>
