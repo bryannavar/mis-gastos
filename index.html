@@ -994,47 +994,43 @@ function renderSelectorEspacio() {
 async function cargarTodasLasDivisas() {
   if(todasLasDivisas.length) return;
   try {
-    const res = await fetch('https://open.er-api.com/v6/latest/USD');
-    const data = await res.json();
-    const info = {
-      'CRC': { simbolo: '₡', nombre: 'Colón costarricense' },
-      'USD': { simbolo: '$', nombre: 'Dólar estadounidense' },
-      'EUR': { simbolo: '€', nombre: 'Euro' },
-      'GBP': { simbolo: '£', nombre: 'Libra esterlina' },
-      'MXN': { simbolo: 'MX$', nombre: 'Peso mexicano' },
-      'ARS': { simbolo: 'AR$', nombre: 'Peso argentino' },
-      'COP': { simbolo: 'CO$', nombre: 'Peso colombiano' },
-      'BRL': { simbolo: 'R$', nombre: 'Real brasileño' },
-      'CLP': { simbolo: 'CL$', nombre: 'Peso chileno' },
-      'PEN': { simbolo: 'S/', nombre: 'Sol peruano' },
-      'UYU': { simbolo: 'UY$', nombre: 'Peso uruguayo' },
-      'PYG': { simbolo: '₲', nombre: 'Guaraní paraguayo' },
-      'BOB': { simbolo: 'Bs', nombre: 'Boliviano' },
-      'GTQ': { simbolo: 'Q', nombre: 'Quetzal guatemalteco' },
-      'HNL': { simbolo: 'L', nombre: 'Lempira hondureño' },
-      'NIO': { simbolo: 'C$', nombre: 'Córdoba nicaragüense' },
-      'DOP': { simbolo: 'RD$', nombre: 'Peso dominicano' },
-      'JPY': { simbolo: '¥', nombre: 'Yen japonés' },
-      'CNY': { simbolo: 'CN¥', nombre: 'Yuan chino' },
-      'CAD': { simbolo: 'CA$', nombre: 'Dólar canadiense' },
-      'AUD': { simbolo: 'A$', nombre: 'Dólar australiano' },
-      'CHF': { simbolo: 'Fr', nombre: 'Franco suizo' }
-    };
-    todasLasDivisas = Object.keys(data.rates).map(codigo => ({
-      codigo,
-      simbolo: info[codigo]?.simbolo || codigo,
-      nombre: info[codigo]?.nombre || codigo
-    }));
-    todasLasDivisas.sort((a, b) => {
-      if(a.codigo === 'CRC') return -1;
-      if(b.codigo === 'CRC') return 1;
-      if(a.codigo === 'USD') return -1;
-      if(b.codigo === 'USD') return 1;
-      return a.nombre.localeCompare(b.nombre);
+    const res = await fetch('https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/get-tipo-cambio', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      },
+      body: JSON.stringify({ fecha: new Date().toISOString().slice(0,10), monedaBase: 'USD', monedaDestino: 'CRC', listaDivisas: true })
     });
-  } catch(e) {
-    console.error('Error cargando divisas:', e);
-  }
+    const data = await res.json();
+    if(data.divisas) {
+      todasLasDivisas = data.divisas;
+      return;
+    }
+  } catch(e) {}
+  
+  // Fallback con lista hardcodeada de las más comunes
+  todasLasDivisas = [
+    { codigo: 'USD', simbolo: '$', nombre: 'Dólar estadounidense' },
+    { codigo: 'EUR', simbolo: '€', nombre: 'Euro' },
+    { codigo: 'GBP', simbolo: '£', nombre: 'Libra esterlina' },
+    { codigo: 'MXN', simbolo: 'MX$', nombre: 'Peso mexicano' },
+    { codigo: 'ARS', simbolo: 'AR$', nombre: 'Peso argentino' },
+    { codigo: 'COP', simbolo: 'CO$', nombre: 'Peso colombiano' },
+    { codigo: 'BRL', simbolo: 'R$', nombre: 'Real brasileño' },
+    { codigo: 'CLP', simbolo: 'CL$', nombre: 'Peso chileno' },
+    { codigo: 'PEN', simbolo: 'S/', nombre: 'Sol peruano' },
+    { codigo: 'UYU', simbolo: 'UY$', nombre: 'Peso uruguayo' },
+    { codigo: 'GTQ', simbolo: 'Q', nombre: 'Quetzal guatemalteco' },
+    { codigo: 'HNL', simbolo: 'L', nombre: 'Lempira hondureño' },
+    { codigo: 'NIO', simbolo: 'C$', nombre: 'Córdoba nicaragüense' },
+    { codigo: 'DOP', simbolo: 'RD$', nombre: 'Peso dominicano' },
+    { codigo: 'JPY', simbolo: '¥', nombre: 'Yen japonés' },
+    { codigo: 'CAD', simbolo: 'CA$', nombre: 'Dólar canadiense' },
+    { codigo: 'AUD', simbolo: 'A$', nombre: 'Dólar australiano' },
+    { codigo: 'CHF', simbolo: 'Fr', nombre: 'Franco suizo' },
+    { codigo: 'CNY', simbolo: 'CN¥', nombre: 'Yuan chino' }
+  ];
 }
 
 async function cambiarEspacio(id) {
