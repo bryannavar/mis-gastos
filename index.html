@@ -1674,6 +1674,10 @@ async function renderCatsNuevoEspacio() {
       .map(d => `<option value="${d.codigo} — ${d.nombre}">`)
       .join('');
   }
+
+  // Mostrar cancelar si ya hay espacios
+  const btnCancelar = document.getElementById('ne-btn-cancelar-container');
+  if(btnCancelar) btnCancelar.style.display = allEspacios.length > 0 ? 'block' : 'none';
 }
 
 let divisasNuevoEspacio = new Set(['CRC', 'USD']);
