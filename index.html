@@ -388,7 +388,9 @@
   <!-- HISTORIAL -->
 <div class="content" id="tab-historial" style="display:none">
   <div class="form-row" style="margin-bottom:14px">
-    <select id="sel-mes" onchange="renderHistorial()"></select>
+    <div id="sel-mes-container" style="margin-bottom:14px;">
+  <select id="sel-mes" onchange="renderHistorial()"></select>
+</div>
   </div>
   <div style="margin-bottom:14px;">
     <input type="text" id="hist-buscar" placeholder="🔍 Buscar por categoría, nota o monto..." 
@@ -396,7 +398,7 @@
       oninput="renderHistorial()">
   </div>
   <div id="historial-list"></div>
-  <div class="section-title" style="margin-top:24px;">Presupuesto del mes</div>
+  <div class="section-title" style="margin-top:24px;" id="historial-presupuesto-titulo">Presupuesto del período</div>
   <div id="historial-presupuesto"></div>
 </div>
 
@@ -1950,11 +1952,28 @@ function renderDashboard() {
 }
 
 function populateMesSelector() {
-  const meses = [...new Set(allTxn.map(t=>t.fecha.slice(0,7)))].sort().reverse();
-  if(!meses.includes(mesActual())) meses.unshift(mesActual());
+  const tipoPeriodo = espacioActivo?.tipo_periodo || 'mensual';
   const sel = document.getElementById('sel-mes');
-  const cur = sel.value || mesActual();
-  sel.innerHTML = meses.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${mesLabel(m)}</option>`).join('');
+  const selContainer = document.getElementById('sel-mes-container');
+
+  if(tipoPeriodo === 'anual') {
+    // Mostrar años disponibles
+    const anios = [...new Set(allTxn.map(t=>t.fecha.slice(0,4)))].sort().reverse();
+    if(!anios.includes(new Date().getFullYear().toString())) anios.unshift(new Date().getFullYear().toString());
+    const cur = sel.value || new Date().getFullYear().toString();
+    sel.innerHTML = anios.map(a=>`<option value="${a}" ${a===cur?'selected':''}>${a}</option>`).join('');
+  } else if(tipoPeriodo === 'especifico') {
+    // No hay selector — período fijo
+    if(selContainer) selContainer.style.display = 'none';
+    return;
+  } else {
+    // Mensual — comportamiento actual
+    const meses = [...new Set(allTxn.map(t=>t.fecha.slice(0,7)))].sort().reverse();
+    if(!meses.includes(mesActual())) meses.unshift(mesActual());
+    const cur = sel.value || mesActual();
+    sel.innerHTML = meses.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${mesLabel(m)}</option>`).join('');
+  }
+  if(selContainer) selContainer.style.display = '';
 }
 
 let monedaPresupuesto = '₡';
@@ -2278,32 +2297,59 @@ async function guardarPresupuesto(categoria, input, periodoKey) {
 }
 
 function renderHistorial() {
-   const mes = document.getElementById('sel-mes') ? document.getElementById('sel-mes').value || mesActual() : mesActual();
+  const tituloHist = document.getElementById('historial-presupuesto-titulo');
+if(tituloHist) {
+  if(tipoPeriodo === 'anual') tituloHist.textContent = 'Presupuesto del año';
+  else if(tipoPeriodo === 'especifico') tituloHist.textContent = 'Presupuesto del período';
+  else tituloHist.textContent = 'Presupuesto del mes';
+}
+  const tipoPeriodo = espacioActivo?.tipo_periodo || 'mensual';
   const buscar = document.getElementById('hist-buscar')?.value.trim().toLowerCase() || '';
-  
-  let d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
-  
+  const monedaPrincipal = espacioActivo?.moneda || '₡';
+
+  let d = [];
+  let egresos = [];
+  let presupKey = '';
+
+  if(tipoPeriodo === 'anual') {
+    const anio = document.getElementById('sel-mes')?.value || new Date().getFullYear().toString();
+    presupKey = anio;
+    d = allTxn.filter(t => t.fecha && t.fecha.startsWith(anio));
+    egresos = d.filter(t => t.tipo === 'egreso');
+  } else if(tipoPeriodo === 'especifico') {
+    const inicio = espacioActivo.periodo_inicio;
+    const fin = espacioActivo.periodo_fin;
+    presupKey = inicio;
+    d = allTxn.filter(t => t.fecha && t.fecha >= inicio && t.fecha <= fin);
+    egresos = d.filter(t => t.tipo === 'egreso');
+  } else {
+    const mes = document.getElementById('sel-mes')?.value || mesActual();
+    presupKey = mes;
+    d = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
+    egresos = d.filter(t => t.tipo === 'egreso');
+  }
+
   if(buscar) {
-    d = d.filter(t => 
+    d = d.filter(t =>
       (t.categoria && t.categoria.toLowerCase().includes(buscar)) ||
       (t.nota && t.nota.toLowerCase().includes(buscar)) ||
       (t.monto && t.monto.toString().includes(buscar))
     );
   }
-  
+
   const list = document.getElementById('historial-list');
-  list.innerHTML = d.length ? d.map(t=>txnHTML(t)).join('') : '<div class="empty"><i class="ti ti-calendar"></i>Sin transacciones este mes</div>';
-  // Presupuesto del mes
-  const egresos = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
-  const presupMes = allPresupuestos.filter(p => p.mes === mes);
+  list.innerHTML = d.length ? d.map(t=>txnHTML(t)).join('') : '<div class="empty"><i class="ti ti-calendar"></i>Sin transacciones</div>';
+
+  // Presupuesto del período
+  const presupMes = allPresupuestos.filter(p => p.mes === presupKey);
   const hpEl = document.getElementById('historial-presupuesto');
   if(!hpEl) return;
   if(!presupMes.length) {
-    hpEl.innerHTML = '<div class="empty">Sin presupuesto definido para este mes</div>';
+    hpEl.innerHTML = '<div class="empty">Sin presupuesto definido para este período</div>';
     return;
   }
   hpEl.innerHTML = presupMes.map(p => {
-    const moneda = p.moneda || '₡';
+    const moneda = p.moneda || monedaPrincipal;
     const gastado = egresos
       .filter(t => t.categoria === p.categoria && t.moneda === moneda)
       .reduce((s,t) => s + t.monto, 0);
