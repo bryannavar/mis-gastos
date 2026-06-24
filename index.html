@@ -434,6 +434,10 @@
   <button class="btn-guardar" onclick="guardarTipoCambio()">
     <i class="ti ti-check"></i> Guardar tipo de cambio
   </button>
+  <button id="btn-cancelar-tc" onclick="cancelarEditarTc()" 
+  style="display:none; width:100%; padding:12px; background:#f3f4f6; border:none; border-radius:10px; font-size:14px; cursor:pointer; font-family:inherit; margin-top:8px; color:#555;">
+  Cancelar edición
+</button>
   <div id="msg-ok-tc" style="display:none; text-align:center; margin-top:12px; color:#16a34a; font-size:14px;"><i class="ti ti-circle-check"></i> ¡Guardado!</div>
   <div id="msg-err-tc" style="display:none; text-align:center; margin-top:12px; color:#dc2626; font-size:14px;"></div>
   <div class="section-title" style="margin-top:24px;">Registros guardados</div>
@@ -1064,34 +1068,31 @@ async function guardarTipoCambio() {
 
   if(!valorcompra || valorcompra <= 0) { errEl.textContent = 'Ingresá un valor válido para compra'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
   if(!fecha) { errEl.textContent = 'Ingresá una fecha'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
-
   if(!valorventa || valorventa <= 0) { errEl.textContent = 'Ingresá un valor válido para venta'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
-  if(!fecha) { errEl.textContent = 'Ingresá una fecha'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
-  
   if(valorventa <= valorcompra) {
     errEl.textContent = 'El valor de venta debe ser mayor al de compra';
     errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return;
   }
-  
+
   const existe = allTc.find(t => t.moneda === moneda && t.fecha === fecha);
   if(existe) {
-    errEl.textContent = `Ya existe un tipo de cambio para ${moneda} el ${fecha}. Borralo primero.`;
+    errEl.textContent = `Ya existe un tipo de cambio para ${moneda} el ${fecha}. Editalo con el lápiz.`;
     errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',4000);
     return;
   }
 
   const { data: { user } } = await sb.auth.getUser();
   const { data, error } = await sb.from('tipo_cambio')
-  .insert({
-    user_id: user.id,
-    espacio_id: espacioActivo.id,
-    moneda,
-    fecha,
-    valorCompra: valorcompra,
-    valorVenta: valorventa
-  })
-  .select()
-  .single();
+    .insert({
+      user_id: user.id,
+      espacio_id: espacioActivo.id,
+      moneda,
+      fecha,
+      valorCompra: valorcompra,
+      valorVenta: valorventa
+    })
+    .select()
+    .single();
 
   if(error) {
     errEl.textContent = 'Error: ' + error.message;
@@ -1103,6 +1104,9 @@ async function guardarTipoCambio() {
   allTc.sort((a,b) => b.fecha.localeCompare(a.fecha));
   document.getElementById('tc-valorCompra').value = '';
   document.getElementById('tc-valorVenta').value = '';
+  document.getElementById('btn-cancelar-tc').style.display = 'none';
+  document.getElementById('btn-guardar-tc').innerHTML = '<i class="ti ti-check"></i> Guardar tipo de cambio';
+  document.getElementById('btn-guardar-tc').onclick = guardarTipoCambio;
   renderTcHistorial();
   renderDashboard();
   const ok = document.getElementById('msg-ok-tc');
@@ -1253,10 +1257,22 @@ function editarTc(id, moneda, fecha, compra, venta) {
   document.getElementById('tc-valorCompra').value = compra;
   document.getElementById('tc-valorVenta').value = venta;
   document.getElementById('tc-fecha').value = fecha;
-  // Cambiar el botón guardar para que actualice en vez de insertar
-  const btn = document.querySelector('[onclick="guardarTipoCambio()"]');
+  
+  const btn = document.getElementById('btn-guardar-tc');
   btn.innerHTML = '<i class="ti ti-check"></i> Actualizar tipo de cambio';
   btn.onclick = () => actualizarTipoCambio(id);
+
+  document.getElementById('btn-cancelar-tc').style.display = 'block';
+}
+
+function cancelarEditarTc() {
+  document.getElementById('tc-valorCompra').value = '';
+  document.getElementById('tc-valorVenta').value = '';
+  document.getElementById('tc-fecha').value = new Date().toISOString().slice(0,10);
+  const btn = document.getElementById('btn-guardar-tc');
+  btn.innerHTML = '<i class="ti ti-check"></i> Guardar tipo de cambio';
+  btn.onclick = guardarTipoCambio;
+  document.getElementById('btn-cancelar-tc').style.display = 'none';
 }
 
 async function actualizarTipoCambio(id) {
@@ -1271,12 +1287,7 @@ async function actualizarTipoCambio(id) {
   if(!error) {
     const tc = allTc.find(t => t.id === id);
     if(tc) { tc.valorCompra = valorCompra; tc.valorVenta = valorVenta; }
-    // Restaurar botón original
-    const btn = document.querySelector('[onclick]');
-    btn.innerHTML = '<i class="ti ti-check"></i> Guardar tipo de cambio';
-    btn.onclick = guardarTipoCambio;
-    document.getElementById('tc-valorCompra').value = '';
-    document.getElementById('tc-valorVenta').value = '';
+    cancelarEditarTc();
     renderTcHistorial();
     renderDashboard();
     const ok = document.getElementById('msg-ok-tc');
