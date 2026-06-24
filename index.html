@@ -2534,7 +2534,8 @@ async function enviarReporte() {
   msgEl.style.display = 'none';
 
   try {
-    const { data: { user, session } } = await sb.auth.getUser();
+    const { data: { user } } = await sb.auth.getUser();
+    const { data: { session } } = await sb.auth.getSession();
     const reporte = construirDatosReporte();
 
     const res = await fetch('https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/enviar-reporte', {
