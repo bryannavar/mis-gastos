@@ -1495,12 +1495,6 @@ async function crearEspacio() {
   const moneda = document.getElementById('ne-moneda').value;
   const errEl = document.getElementById('ne-msg-err');
 
-  // Límite de espacios según plan
-  if(allEspacios.length >= (perfilUsuario?.espacios_permitidos || 2)) {
-    showTab('planes');
-    return;
-  }
-
   if(!nombre) {
     errEl.textContent = 'Ingresá un nombre para el espacio';
     errEl.style.display = 'block';
@@ -1508,17 +1502,32 @@ async function crearEspacio() {
     return;
   }
 
-  const { data: { user } } = await sb.auth.getUser();
-  const { data: espacio, error } = await sb.from('espacios').insert({
-    user_id: user.id, nombre, tipo, moneda
-  }).select().single();
+  const { data: { session } } = await sb.auth.getSession();
 
-  if(error) {
-    errEl.textContent = 'Error: ' + error.message;
-    errEl.style.display = 'block';
-    setTimeout(() => errEl.style.display = 'none', 3000);
+  const res = await fetch('https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/crear-espacio', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({ nombre, tipo, moneda })
+  });
+
+  const result = await res.json();
+
+  if(!res.ok) {
+    if(result.error === 'limite_alcanzado') {
+      showTab('planes');
+    } else {
+      errEl.textContent = 'Error: ' + result.error;
+      errEl.style.display = 'block';
+      setTimeout(() => errEl.style.display = 'none', 3000);
+    }
     return;
   }
+
+  const espacio = result.espacio;
+  const { data: { user } } = await sb.auth.getUser();
 
   // Insertar categorías seleccionadas
   const cats = [];
