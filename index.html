@@ -677,6 +677,11 @@ function esFounder() {
   return perfilUsuario?.plan === 'founder';
 }
 
+function abrirWhatsApp() {
+  const msg = encodeURIComponent('Hola, adjunto comprobante de pago de Mi Presupuesto. Mi correo es: ');
+  window.open(`https://wa.me/50684494238?text=${msg}`, '_blank');
+}
+
 async function loadMonedas() {
   if(!espacioActivo) return;
   const { data, error } = await sb.from('monedas_espacio').select('*').eq('espacio_id', espacioActivo.id).order('created_at', { ascending: true });
