@@ -2492,13 +2492,25 @@ function construirDatosReporte() {
   // Transacciones (sin las de gastos fijos con nota __fijo__)
   const transacciones = txnPeriodo
     .filter(t => !(t.nota && t.nota.startsWith('__fijo__')))
-    .map(t => ({
-      fecha: t.fecha ? new Date(t.fecha+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'}) : '',
-      descripcion: t.nota || '',
-      categoria: t.categoria,
-      monto: t.monto,
-      tipo: t.tipo
-    }));
+    .map(t => {
+      // Calcular equivalente en moneda principal si es moneda extranjera
+      let montoEquiv = null;
+      if(t.moneda !== monedaPrincipal) {
+        const codigo = allMonedas.find(m => m.simbolo === t.moneda)?.codigo;
+        const tipoTc = t.tipo === 'ingreso' ? 'compra' : 'venta';
+        const tc = codigo ? getTc(codigo, t.fecha, tipoTc) : null;
+        if(tc) montoEquiv = Math.round(t.monto * tc);
+      }
+      return {
+        fecha: t.fecha ? new Date(t.fecha+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'}) : '',
+        descripcion: t.nota || '',
+        categoria: t.categoria,
+        monto: t.monto,
+        moneda: t.moneda,
+        montoEquiv,
+        tipo: t.tipo
+      };
+    });
 
   const simbolo = monedaPrincipal;
 
@@ -2585,13 +2597,21 @@ function descargarReporte() {
     </tr>`;
   }).join('');
 
-  const txnRows = transacciones.slice(0,50).map(t => `
+  const txnRows = transacciones.slice(0,50).map(t => {
+    function fmtMoneda(monto, moneda) {
+      if(moneda === '₡') return `₡${Math.abs(Math.round(monto)).toLocaleString('es-CR')}`;
+      return `${moneda}${Math.abs(monto).toLocaleString('es-CR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    }
+    const montoStr = fmtMoneda(t.monto, t.moneda);
+    const equivStr = t.montoEquiv != null ? `<br><span style="font-size:10px;color:#aaa;">≈ ${fmtR(t.montoEquiv)}</span>` : '';
+    return `
     <tr>
       <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;">${t.fecha}</td>
       <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;">${t.descripcion || '—'}</td>
       <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;">${t.categoria}</td>
-      <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;text-align:right;color:${t.tipo==='ingreso'?'#16a34a':'#dc2626'};">${t.tipo==='ingreso'?'+':'-'}${fmtR(t.monto)}</td>
-    </tr>`).join('');
+      <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;text-align:right;color:${t.tipo==='ingreso'?'#16a34a':'#dc2626'};">${t.tipo==='ingreso'?'+':'-'}${montoStr}${equivStr}</td>
+    </tr>`;
+  }).join('');
 
   const html = `<!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8"><title>Reporte ${espacio} — ${periodo}</title>
