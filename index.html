@@ -360,11 +360,11 @@
   <div class="section-title">Presupuesto del mes</div>
   <p style="font-size:13px; color:#888; margin-bottom:8px; line-height:1.6;">Definí cuánto querés gastar por categoría este mes.</p>
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-    <span style="font-size:12px; color:#888;">Moneda del presupuesto: <strong id="presupuesto-moneda-label"></strong></span>
-    <button onclick="importarPresupuestoMesAnterior()" style="background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; font-family:inherit; color:#374151;">
-      <i class="ti ti-copy"></i> Importar mes anterior
-    </button>
-  </div>
+  <span style="font-size:12px; color:#888;">Moneda: <strong id="presupuesto-moneda-label"></strong> · <span id="presupuesto-periodo-label"></span></span>
+  <button id="btn-importar-presupuesto" onclick="importarPresupuestoMesAnterior()" style="background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; font-family:inherit; color:#374151;">
+    <i class="ti ti-copy"></i> Importar mes anterior
+  </button>
+</div>
   <div id="presupuesto-list"></div>
 </div>
 
@@ -535,6 +535,28 @@
     </div>
 
     <div class="form-group">
+  <label class="form-label">Tipo de presupuesto</label>
+  <select id="ne-periodo" onchange="togglePeriodoEspacio()">
+    <option value="mensual">📅 Mensual</option>
+    <option value="anual">📆 Anual</option>
+    <option value="especifico">🗓️ Período específico</option>
+  </select>
+</div>
+<div id="ne-periodo-fechas" style="display:none;">
+  <div class="form-row" style="gap:12px; margin-bottom:12px;">
+    <div class="form-group" style="flex:1; margin-bottom:0;">
+      <label class="form-label">Fecha inicio</label>
+      <input type="date" id="ne-periodo-inicio">
+    </div>
+    <div class="form-group" style="flex:1; margin-bottom:0;">
+      <label class="form-label">Fecha fin</label>
+      <input type="date" id="ne-periodo-fin">
+    </div>
+  </div>
+</div>
+
+
+    <div class="form-group">
       <label class="form-label">Categorías de egreso</label>
       <p style="font-size:12px; color:#aaa; margin-bottom:8px;">Seleccioná las que querés usar. Podés agregar las tuyas.</p>
       <div id="ne-cats-egreso" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;"></div>
@@ -693,6 +715,11 @@ let perfilUsuario = null;
 async function loadPerfil() {
   const { data, error } = await sb.from('profiles').select('*').single();
   if(!error && data) perfilUsuario = data;
+}
+
+function togglePeriodoEspacio() {
+  const tipo = document.getElementById('ne-periodo').value;
+  document.getElementById('ne-periodo-fechas').style.display = tipo === 'especifico' ? 'block' : 'none';
 }
 
 function copiarSINPE() {
@@ -1678,10 +1705,27 @@ async function crearEspacio() {
   const nombre = document.getElementById('ne-nombre').value.trim();
   const tipo = document.getElementById('ne-tipo').value;
   const moneda = document.getElementById('ne-moneda').value;
+  const tipo_periodo = document.getElementById('ne-periodo').value;
+  const periodo_inicio = document.getElementById('ne-periodo-inicio')?.value || null;
+  const periodo_fin = document.getElementById('ne-periodo-fin')?.value || null;
   const errEl = document.getElementById('ne-msg-err');
 
   if(!nombre) {
     errEl.textContent = 'Ingresá un nombre para el espacio';
+    errEl.style.display = 'block';
+    setTimeout(() => errEl.style.display = 'none', 3000);
+    return;
+  }
+
+  if(tipo_periodo === 'especifico' && (!periodo_inicio || !periodo_fin)) {
+    errEl.textContent = 'Ingresá la fecha de inicio y fin del período';
+    errEl.style.display = 'block';
+    setTimeout(() => errEl.style.display = 'none', 3000);
+    return;
+  }
+
+  if(tipo_periodo === 'especifico' && periodo_fin <= periodo_inicio) {
+    errEl.textContent = 'La fecha fin debe ser mayor a la fecha inicio';
     errEl.style.display = 'block';
     setTimeout(() => errEl.style.display = 'none', 3000);
     return;
@@ -1695,7 +1739,7 @@ async function crearEspacio() {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`
     },
-    body: JSON.stringify({ nombre, tipo, moneda })
+    body: JSON.stringify({ nombre, tipo, moneda, tipo_periodo, periodo_inicio, periodo_fin })
   });
 
   const result = await res.json();
@@ -1739,6 +1783,7 @@ async function crearEspacio() {
     showTab('dashboard');
   }, 1500);
 }
+
 
 function simboloACodigoTc(simbolo) {
   if(simbolo === '₡') return 'CRC';
@@ -1845,9 +1890,8 @@ let monedaPresupuesto = '₡';
 
 
 function renderPresupuesto() {
-  const mes = mesActual();
   const moneda = espacioActivo?.moneda || '₡';
-  const monedaCodigo = allMonedas.find(m => m.simbolo === moneda)?.codigo || 'CRC';
+  const tipoPeriodo = espacioActivo?.tipo_periodo || 'mensual';
 
   const labelMoneda = document.getElementById('presupuesto-moneda-label');
   if(labelMoneda) {
@@ -1855,16 +1899,46 @@ function renderPresupuesto() {
     labelMoneda.textContent = monedaInfo ? monedaInfo.nombre : moneda;
   }
 
-  const delMes = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
+  // Calcular rango de fechas según período
+  let periodoLabel = '';
+  let txnFiltradas = [];
+  let periodoKey = '';
+
+  if(tipoPeriodo === 'mensual') {
+    const mes = mesActual();
+    periodoKey = mes;
+    periodoLabel = mesLabel(mes);
+    txnFiltradas = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes) && t.tipo === 'egreso');
+  } else if(tipoPeriodo === 'anual') {
+    const anio = new Date().getFullYear().toString();
+    periodoKey = anio;
+    periodoLabel = anio;
+    txnFiltradas = allTxn.filter(t => t.fecha && t.fecha.startsWith(anio) && t.tipo === 'egreso');
+  } else if(tipoPeriodo === 'especifico') {
+    const inicio = espacioActivo.periodo_inicio;
+    const fin = espacioActivo.periodo_fin;
+    periodoKey = inicio;
+    periodoLabel = `${new Date(inicio+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'})} — ${new Date(fin+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'})}`;
+    txnFiltradas = allTxn.filter(t => t.fecha && t.fecha >= inicio && t.fecha <= fin && t.tipo === 'egreso');
+  }
+
+  // Actualizar label del período
+  const labelPeriodo = document.getElementById('presupuesto-periodo-label');
+  if(labelPeriodo) labelPeriodo.textContent = periodoLabel;
+
+  // Botón importar — solo para mensual
+  const btnImportar = document.getElementById('btn-importar-presupuesto');
+  if(btnImportar) btnImportar.style.display = tipoPeriodo === 'mensual' ? '' : 'none';
+
   const list = document.getElementById('presupuesto-list');
   if(!list) return;
 
   const cats = allCategorias.filter(c => c.tipo === 'egreso').map(c => c.nombre);
 
   list.innerHTML = cats.map(cat => {
-    const presup = allPresupuestos.find(p => p.categoria === cat && p.mes === mes);
-    
-    const gastado = delMes.filter(t => t.categoria === cat).reduce((s, t) => {
+    const presup = allPresupuestos.find(p => p.categoria === cat && p.mes === periodoKey);
+
+    const gastado = txnFiltradas.filter(t => t.categoria === cat).reduce((s, t) => {
       if(t.moneda === moneda) return s + t.monto;
       const tMonedaCodigo = allMonedas.find(m => m.simbolo === t.moneda)?.codigo;
       const tc = tMonedaCodigo ? getTc(tMonedaCodigo, t.fecha, 'venta') : null;
@@ -1883,8 +1957,7 @@ function renderPresupuesto() {
           placeholder="Sin límite"
           inputmode="decimal"
           style="width:110px; text-align:right; border:1px solid #e5e7eb; border-radius:8px; padding:4px 8px; font-size:13px;"
-          onblur="formatMontoPresupuesto(this)"
-          onblur="guardarPresupuesto('${cat}', this)">
+          onblur="guardarPresupuesto('${cat}', this, '${periodoKey}')">
       </div>
       ${limite > 0 ? `
         <div style="display:flex; justify-content:space-between; font-size:11px; color:#888; margin-bottom:4px;">
@@ -2095,9 +2168,9 @@ async function guardarEdicionEspacio() {
   }, 1500);
 }
 
-async function guardarPresupuesto(categoria, input) {
+async function guardarPresupuesto(categoria, input, periodoKey) {
   const monto = parseFloat(input.value) || 0;
-  const mes = mesActual();
+  const mes = periodoKey || mesActual();
   const moneda = espacioActivo?.moneda || '₡';
   const { data: { user } } = await sb.auth.getUser();
 
