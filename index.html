@@ -393,10 +393,7 @@
   <div class="form-row" style="margin-bottom:12px;">
     <div class="form-group" style="flex:1; margin-bottom:0;">
       <label class="form-label">Moneda</label>
-      <select id="tc-buscar-moneda">
-        <option value="USD">$ Dólares (USD)</option>
-        <option value="EUR">€ Euros (EUR)</option>
-      </select>
+      <select id="tc-moneda"></select>
     </div>
     <div class="form-group" style="flex:1; margin-bottom:0;">
       <label class="form-label">Fecha</label>
@@ -1463,9 +1460,17 @@ function showTab(t) {
   if(t==='nuevo-espacio') { renderCatsNuevoEspacio(); }
   if(t==='editar-espacio') { renderEditarEspacio(); }
   if(t==='presupuesto') { renderPresupuesto(); }
-if(t==='configuracion') {
+  if(t==='configuracion') {
     renderTcHistorial();
+    renderConfigEspacios();
+    const opcionesMoneda = allMonedas
+      .filter(m => m.codigo !== 'CRC')
+      .map(m => `<option value="${m.codigo}">${m.simbolo} ${m.nombre}</option>`)
+      .join('');
+    document.getElementById('tc-moneda').innerHTML = opcionesMoneda;
+    document.getElementById('tc-buscar-moneda').innerHTML = opcionesMoneda;
     document.getElementById('tc-fecha').value = new Date().toISOString().slice(0,10);
+    document.getElementById('tc-buscar-fecha').value = new Date().toISOString().slice(0,10);
   }
   if(t==='fijos') {
     const sel = document.getElementById('gf-categoria');
