@@ -230,28 +230,33 @@
 <!-- APP -->
 <div id="screen-app" class="app" style="display:none">
   <div class="header">
-    <div class="header-top">
-    <h1><i class="ti ti-wallet" aria-hidden="true" style="margin-right:6px;vertical-align:-3px"></i>Mi Presupuesto</h1>
-   <div style="display:flex; align-items:center; gap:6px;">
-  <div style="display:flex; align-items:center; gap:6px;" id="header-btns">
-    <select id="sel-espacio" ...></select>
-    <button onclick="showApp(false); showTab('editar-espacio');" ...>
-    <button onclick="showApp(false); showTab('nuevo-espacio');" ...>
-    <button onclick="toggleTema()" ...>
-    <button onclick="showTab('ayuda')" ...>
+  <div class="header-top">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <i class="ti ti-wallet" aria-hidden="true" style="font-size:20px; color:#1a1a1a;"></i>
+      <div>
+        <div style="font-size:11px; color:#888; line-height:1;">Mi Presupuesto</div>
+        <div id="espacio-nombre-header" style="font-size:15px; font-weight:600; color:#1a1a1a; line-height:1.3;"></div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <div style="display:flex; align-items:center; gap:6px;" id="header-btns">
+        <select id="sel-espacio" onchange="cambiarEspacio(this.value)" style="border:1px solid #e5e7eb; border-radius:8px; padding:4px 8px; font-size:12px; font-family:inherit; background:#f9fafb; color:#374151; cursor:pointer; max-width:90px;"></select>
+        <button onclick="showApp(false); showTab('editar-espacio');" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 7px; cursor:pointer;" title="Editar espacio"><i class="ti ti-pencil" style="font-size:15px;"></i></button>
+        <button onclick="showApp(false); showTab('nuevo-espacio');" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 7px; cursor:pointer;" title="Nuevo espacio"><i class="ti ti-plus" style="font-size:15px;"></i></button>
+        <button onclick="showTab('ayuda')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 7px; cursor:pointer;" title="Ayuda"><i class="ti ti-help" style="font-size:15px;"></i></button>
+      </div>
+      <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout" style="font-size:15px;"></i></button>
+    </div>
   </div>
-  <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout" style="font-size:15px;"></i></button>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('dashboard')"><i class="ti ti-home"></i> Inicio</button>
+    <button class="tab" onclick="showTab('agregar')"><i class="ti ti-plus"></i> Agregar</button>
+    <button class="tab" onclick="showTab('fijos')"><i class="ti ti-repeat"></i> Fijos</button>
+    <button class="tab" onclick="showTab('presupuesto')"><i class="ti ti-wallet"></i> Presupuesto</button>
+    <button class="tab" onclick="showTab('historial')"><i class="ti ti-list"></i> Historial</button>
+    <button class="tab" onclick="showTab('configuracion')"><i class="ti ti-settings"></i> Config</button>
+  </div>
 </div>
-  </div>
-    <div class="tabs">
-  		<button class="tab active" onclick="showTab('dashboard')"><i class="ti ti-home"></i> Inicio</button>
-      <button class="tab" onclick="showTab('agregar')"><i class="ti ti-plus"></i> Agregar</button>
-      <button class="tab" onclick="showTab('fijos')"><i class="ti ti-repeat"></i> Fijos</button>
-      <button class="tab" onclick="showTab('presupuesto')"><i class="ti ti-wallet"></i> Presupuesto</button>
-      <button class="tab" onclick="showTab('historial')"><i class="ti ti-list"></i> Historial</button>
-      <button class="tab" onclick="showTab('configuracion')"><i class="ti ti-settings"></i> Config</button>
-	</div>
-  </div>
 
   <!-- DASHBOARD -->
   <div class="content" id="tab-dashboard">
