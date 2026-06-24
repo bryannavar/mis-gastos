@@ -41,13 +41,10 @@
     .login-err { margin-top: 14px; font-size: 14px; text-align: center; color: #dc2626; display: none; }
 
     /* HEADER */
-    .header { background: #fff; border-bottom: 0.5px solid #e0e0e0; padding: 12px 16px 0; position: sticky; top: 0; z-index: 10; }
-    .header-row1 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-    .header-row2 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
-    .header-row2-btns { display: flex; align-items: center; gap: 6px; }
+    .header { background: #fff; border-bottom: 0.5px solid #e0e0e0; padding: 16px 16px 0; position: sticky; top: 0; z-index: 10; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .header h1 { font-size: 20px; font-weight: 600; color: #1a1a1a; }
-    .btn-logout { background: none; border: none; color: #888; font-size: 18px; cursor: pointer; padding: 4px; }
-    #sel-espacio { border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px 8px; font-size: 13px; font-family: inherit; background: #f9fafb; color: #374151; cursor: pointer; flex: 1; min-width: 0; max-width: 100%; }
+    .btn-logout { background: none; border: none; color: #888; font-size: 20px; cursor: pointer; padding: 4px; }
     .tabs { 
       display: flex; 
       position: fixed; 
@@ -233,8 +230,7 @@
 <!-- APP -->
 <div id="screen-app" class="app" style="display:none">
   <div class="header">
-  <!-- Fila 1: logo + nombre del espacio | logout -->
-  <div class="header-row1">
+  <div class="header-top">
     <div style="display:flex; align-items:center; gap:8px;">
       <i class="ti ti-wallet" aria-hidden="true" style="font-size:20px; color:#1a1a1a;"></i>
       <div>
@@ -242,15 +238,14 @@
         <div id="espacio-nombre-header" style="font-size:15px; font-weight:600; color:#1a1a1a; line-height:1.3;"></div>
       </div>
     </div>
-    <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout" style="font-size:16px;"></i></button>
-  </div>
-  <!-- Fila 2: selector espacio | botones acción -->
-  <div class="header-row2" id="header-btns">
-    <select id="sel-espacio" onchange="cambiarEspacio(this.value)"></select>
-    <div class="header-row2-btns">
-      <button onclick="showApp(false); showTab('editar-espacio');" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer;" title="Editar espacio"><i class="ti ti-pencil" style="font-size:15px;"></i></button>
-      <button onclick="showApp(false); showTab('nuevo-espacio');" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer;" title="Nuevo espacio"><i class="ti ti-plus" style="font-size:15px;"></i></button>
-      <button onclick="showTab('ayuda')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 8px; cursor:pointer;" title="Ayuda"><i class="ti ti-help" style="font-size:15px;"></i></button>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <div style="display:flex; align-items:center; gap:6px;" id="header-btns">
+        <select id="sel-espacio" onchange="cambiarEspacio(this.value)" style="border:1px solid #e5e7eb; border-radius:8px; padding:4px 8px; font-size:12px; font-family:inherit; background:#f9fafb; color:#374151; cursor:pointer; max-width:90px;"></select>
+        <button onclick="showApp(false); showTab('editar-espacio');" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 7px; cursor:pointer;" title="Editar espacio"><i class="ti ti-pencil" style="font-size:15px;"></i></button>
+        <button onclick="showApp(false); showTab('nuevo-espacio');" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 7px; cursor:pointer;" title="Nuevo espacio"><i class="ti ti-plus" style="font-size:15px;"></i></button>
+        <button onclick="showTab('ayuda')" style="background:#f3f4f6; border:none; border-radius:8px; padding:6px 7px; cursor:pointer;" title="Ayuda"><i class="ti ti-help" style="font-size:15px;"></i></button>
+      </div>
+      <button class="btn-logout" onclick="logout()" title="Cerrar sesión"><i class="ti ti-logout" style="font-size:15px;"></i></button>
     </div>
   </div>
   <div class="tabs">
@@ -405,6 +400,19 @@
   <div id="historial-list"></div>
   <div class="section-title" style="margin-top:24px;" id="historial-presupuesto-titulo">Presupuesto del período</div>
   <div id="historial-presupuesto"></div>
+
+  <!-- BOTONES DE REPORTE -->
+  <div style="display:flex; gap:10px; margin-top:28px; margin-bottom:8px;">
+    <button onclick="enviarReporte()" id="btn-enviar-reporte"
+      style="flex:1; padding:13px; background:#1a1a1a; border:none; border-radius:12px; font-size:14px; font-weight:500; cursor:pointer; color:#fff; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px;">
+      <i class="ti ti-mail"></i> Enviar al correo
+    </button>
+    <button onclick="descargarReporte()"
+      style="flex:1; padding:13px; background:#f3f4f6; border:1px solid #e5e7eb; border-radius:12px; font-size:14px; font-weight:500; cursor:pointer; color:#374151; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px;">
+      <i class="ti ti-download"></i> Descargar
+    </button>
+  </div>
+  <div id="reporte-msg" style="display:none; text-align:center; margin-top:10px; font-size:13px;"></div>
 </div>
 
 
@@ -2398,6 +2406,238 @@ if(tituloHist) {
       </div>
     </div>`;
   }).join('');
+}
+
+// ── REPORTE ──────────────────────────────────────────────────────────────────
+
+function construirDatosReporte() {
+  const tipoPeriodo = espacioActivo?.tipo_periodo || 'mensual';
+  const monedaPrincipal = espacioActivo?.moneda || '₡';
+
+  // Rango de txn
+  let txnPeriodo = [];
+  let periodoLabel = '';
+  let presupKey = '';
+
+  if(tipoPeriodo === 'anual') {
+    const anio = document.getElementById('sel-mes')?.value || new Date().getFullYear().toString();
+    periodoLabel = anio;
+    presupKey = anio;
+    txnPeriodo = allTxn.filter(t => t.fecha && t.fecha.startsWith(anio));
+  } else if(tipoPeriodo === 'especifico') {
+    const inicio = espacioActivo.periodo_inicio;
+    const fin = espacioActivo.periodo_fin;
+    periodoLabel = `${new Date(inicio+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'})} — ${new Date(fin+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'})}`;
+    presupKey = inicio;
+    txnPeriodo = allTxn.filter(t => t.fecha && t.fecha >= inicio && t.fecha <= fin);
+  } else {
+    const mes = document.getElementById('sel-mes')?.value || mesActual();
+    periodoLabel = mesLabel(mes);
+    presupKey = mes;
+    txnPeriodo = allTxn.filter(t => t.fecha && t.fecha.startsWith(mes));
+  }
+
+  // Totales en moneda principal
+  let ingresos = 0, egresos = 0;
+  txnPeriodo.forEach(t => {
+    let monto = t.monto;
+    if(t.moneda !== monedaPrincipal) {
+      const codigo = allMonedas.find(m => m.simbolo === t.moneda)?.codigo;
+      const tipoTc = t.tipo === 'ingreso' ? 'compra' : 'venta';
+      const tc = codigo ? getTc(codigo, t.fecha, tipoTc) : null;
+      monto = tc ? t.monto * tc : 0;
+    }
+    if(t.tipo === 'ingreso') ingresos += monto;
+    else egresos += monto;
+  });
+
+  // Egresos por categoría
+  const egXCat = {};
+  txnPeriodo.filter(t => t.tipo === 'egreso').forEach(t => {
+    let monto = t.monto;
+    if(t.moneda !== monedaPrincipal) {
+      const codigo = allMonedas.find(m => m.simbolo === t.moneda)?.codigo;
+      const tc = codigo ? getTc(codigo, t.fecha, 'venta') : null;
+      monto = tc ? t.monto * tc : 0;
+    }
+    egXCat[t.categoria] = (egXCat[t.categoria] || 0) + monto;
+  });
+
+  const totalEgXCat = Object.values(egXCat).reduce((s,v) => s+v, 0);
+  const categorias = Object.entries(egXCat)
+    .sort((a,b) => b[1]-a[1])
+    .map(([nombre, monto]) => ({
+      nombre,
+      monto: Math.round(monto),
+      porcentaje: totalEgXCat > 0 ? (monto / totalEgXCat * 100) : 0
+    }));
+
+  // Presupuesto vs real
+  const presupuestosPeriodo = allPresupuestos.filter(p => p.mes === presupKey);
+  const presupuestosData = presupuestosPeriodo.map(p => {
+    const ejecutado = txnPeriodo
+      .filter(t => t.tipo === 'egreso' && t.categoria === p.categoria)
+      .reduce((s,t) => {
+        let monto = t.monto;
+        if(t.moneda !== monedaPrincipal) {
+          const codigo = allMonedas.find(m => m.simbolo === t.moneda)?.codigo;
+          const tc = codigo ? getTc(codigo, t.fecha, 'venta') : null;
+          monto = tc ? t.monto * tc : 0;
+        }
+        return s + monto;
+      }, 0);
+    return { categoria: p.categoria, presupuestado: p.monto, ejecutado: Math.round(ejecutado) };
+  });
+
+  // Transacciones (sin las de gastos fijos con nota __fijo__)
+  const transacciones = txnPeriodo
+    .filter(t => !(t.nota && t.nota.startsWith('__fijo__')))
+    .map(t => ({
+      fecha: t.fecha ? new Date(t.fecha+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'}) : '',
+      descripcion: t.nota || '',
+      categoria: t.categoria,
+      monto: t.monto,
+      tipo: t.tipo
+    }));
+
+  const simbolo = monedaPrincipal;
+
+  return {
+    espacio: espacioActivo?.nombre || '',
+    periodo: periodoLabel,
+    moneda: monedaPrincipal,
+    simbolo,
+    ingresos: Math.round(ingresos),
+    egresos: Math.round(egresos),
+    balance: Math.round(ingresos - egresos),
+    categorias,
+    presupuestos: presupuestosData,
+    transacciones
+  };
+}
+
+async function enviarReporte() {
+  const btn = document.getElementById('btn-enviar-reporte');
+  const msgEl = document.getElementById('reporte-msg');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader"></i> Enviando...';
+  msgEl.style.display = 'none';
+
+  try {
+    const { data: { user, session } } = await sb.auth.getUser();
+    const reporte = construirDatosReporte();
+
+    const res = await fetch('https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/enviar-reporte', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({ reporte, email_destino: user.email })
+    });
+
+    const result = await res.json();
+    if(res.ok && result.ok) {
+      msgEl.style.color = '#16a34a';
+      msgEl.innerHTML = '<i class="ti ti-circle-check"></i> Reporte enviado a ' + user.email;
+    } else {
+      msgEl.style.color = '#dc2626';
+      msgEl.textContent = 'Error al enviar: ' + (result.error || 'intentá de nuevo');
+    }
+  } catch(e) {
+    msgEl.style.color = '#dc2626';
+    msgEl.textContent = 'Error de conexión. Intentá de nuevo.';
+  }
+
+  msgEl.style.display = 'block';
+  setTimeout(() => msgEl.style.display = 'none', 5000);
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-mail"></i> Enviar al correo';
+}
+
+function descargarReporte() {
+  const reporte = construirDatosReporte();
+  const { espacio, periodo, simbolo, ingresos, egresos, balance, categorias, presupuestos, transacciones } = reporte;
+
+  function fmtR(n) {
+    if(simbolo === '$') return `$${Math.abs(n).toLocaleString('es-CR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    return `₡${Math.abs(Math.round(n)).toLocaleString('es-CR')}`;
+  }
+
+  const balanceColor = balance >= 0 ? '#16a34a' : '#dc2626';
+  const balanceLabel = balance >= 0 ? 'Superávit' : 'Déficit';
+
+  const catRows = categorias.map(c => `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;">${c.nombre}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;color:#dc2626;">${fmtR(c.monto)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;color:#6b7280;">${c.porcentaje.toFixed(1)}%</td>
+    </tr>`).join('');
+
+  const presupRows = presupuestos.map(p => {
+    const pct = p.presupuestado > 0 ? (p.ejecutado / p.presupuestado * 100) : 0;
+    const color = pct > 100 ? '#dc2626' : pct > 80 ? '#f59e0b' : '#16a34a';
+    return `<tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;">${p.categoria}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;">${fmtR(p.presupuestado)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;color:${color};">${fmtR(p.ejecutado)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;color:${color};">${pct.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+
+  const txnRows = transacciones.slice(0,50).map(t => `
+    <tr>
+      <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;">${t.fecha}</td>
+      <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;">${t.descripcion || '—'}</td>
+      <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;">${t.categoria}</td>
+      <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;text-align:right;color:${t.tipo==='ingreso'?'#16a34a':'#dc2626'};">${t.tipo==='ingreso'?'+':'-'}${fmtR(t.monto)}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><title>Reporte ${espacio} — ${periodo}</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f3f4f6;margin:0;padding:24px;}
+  .wrap{max-width:700px;margin:0 auto;}
+  h2{font-size:16px;font-weight:600;color:#1a1a1a;margin:28px 0 12px;}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;margin-bottom:8px;}
+  thead tr{background:#f9fafb;}
+  th{padding:10px 12px;text-align:left;font-size:12px;color:#6b7280;font-weight:600;}
+  .resumen{display:flex;gap:12px;margin-bottom:4px;}
+  .card{flex:1;background:#fff;border-radius:10px;padding:16px;border:1px solid #e5e7eb;text-align:center;}
+  .card-label{font-size:11px;color:#6b7280;margin-bottom:4px;}
+  .card-val{font-size:18px;font-weight:700;}
+  footer{text-align:center;margin-top:32px;font-size:12px;color:#9ca3af;}
+</style></head><body>
+<div class="wrap">
+  <div style="background:#1a1a1a;border-radius:12px;padding:24px;text-align:center;margin-bottom:16px;">
+    <div style="font-size:13px;color:#9ca3af;margin-bottom:4px;">Mi Presupuesto</div>
+    <div style="font-size:22px;font-weight:700;color:#fff;margin-bottom:4px;">${espacio}</div>
+    <div style="font-size:13px;color:#9ca3af;">${periodo}</div>
+  </div>
+  <div class="resumen">
+    <div class="card"><div class="card-label">INGRESOS</div><div class="card-val" style="color:#16a34a;">${fmtR(ingresos)}</div></div>
+    <div class="card"><div class="card-label">EGRESOS</div><div class="card-val" style="color:#dc2626;">${fmtR(egresos)}</div></div>
+    <div class="card"><div class="card-label">${balanceLabel.toUpperCase()}</div><div class="card-val" style="color:${balanceColor};">${fmtR(Math.abs(balance))}</div></div>
+  </div>
+  ${categorias.length ? `<h2>Egresos por categoría</h2>
+  <table><thead><tr><th>Categoría</th><th style="text-align:right">Monto</th><th style="text-align:right">% del total</th></tr></thead>
+  <tbody>${catRows}</tbody></table>` : ''}
+  ${presupuestos.length ? `<h2>Presupuesto vs Real</h2>
+  <table><thead><tr><th>Categoría</th><th style="text-align:right">Presupuestado</th><th style="text-align:right">Ejecutado</th><th style="text-align:right">%</th></tr></thead>
+  <tbody>${presupRows}</tbody></table>` : ''}
+  ${transacciones.length ? `<h2>Transacciones${transacciones.length>50?' (primeras 50)':''}</h2>
+  <table><thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th style="text-align:right">Monto</th></tr></thead>
+  <tbody>${txnRows}</tbody></table>` : ''}
+  <footer>Generado por <strong>Mi Presupuesto</strong> · mipresupuestocr.com · ${new Date().toLocaleDateString('es-CR',{day:'numeric',month:'long',year:'numeric'})}</footer>
+</div></body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `reporte-${espacio.toLowerCase().replace(/\s+/g,'-')}-${periodo.replace(/\s+/g,'-')}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // Desregistrar service workers viejos
