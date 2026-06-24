@@ -385,36 +385,66 @@
 
 
   <!-- CONFIGURACION -->
-  <div class="content" id="tab-configuracion" style="display:none">
-    <div class="section-title">Tipo de cambio</div>
-    <p style="font-size:13px; color:#888; margin-bottom:16px; line-height:1.6;">Ingresá el tipo de cambio para convertir otras monedas a colones. Solo un registro por moneda por día.</p>
-    <div class="form-group">
+<div class="content" id="tab-configuracion" style="display:none">
+  
+  <!-- BUSCAR TC POR FECHA -->
+  <div class="section-title">Consultar tipo de cambio</div>
+  <p style="font-size:13px; color:#888; margin-bottom:12px; line-height:1.6;">Buscá el TC oficial de cualquier fecha o cargalo manualmente.</p>
+  <div class="form-row" style="margin-bottom:12px;">
+    <div class="form-group" style="flex:1; margin-bottom:0;">
       <label class="form-label">Moneda</label>
-      <select id="tc-moneda">
+      <select id="tc-buscar-moneda">
         <option value="USD">$ Dólares (USD)</option>
         <option value="EUR">€ Euros (EUR)</option>
       </select>
     </div>
-    <div class="form-group">
-      <label class="form-label">Valor en colones Venta (₡)</label>
-      <input type="number" id="tc-valorVenta" placeholder="ej: 520" min="1" step="0.01">
-    </div>
-	<div class="form-group">
-      <label class="form-label">Valor en colones Compra (₡)</label>
-      <input type="number" id="tc-valorCompra" placeholder="ej: 520" min="1" step="0.01">
-    </div>
-    <div class="form-group">
+    <div class="form-group" style="flex:1; margin-bottom:0;">
       <label class="form-label">Fecha</label>
-      <input type="date" id="tc-fecha">
+      <input type="date" id="tc-buscar-fecha">
     </div>
-    <button class="btn-guardar" onclick="guardarTipoCambio()">
-      <i class="ti ti-check"></i> Guardar tipo de cambio
-    </button>
-    <div id="msg-ok-tc" style="display:none; text-align:center; margin-top:12px; color:#16a34a; font-size:14px;"><i class="ti ti-circle-check"></i> ¡Guardado!</div>
-    <div id="msg-err-tc" style="display:none; text-align:center; margin-top:12px; color:#dc2626; font-size:14px;"></div>
-    <div class="section-title" style="margin-top:24px;">Registros guardados</div>
-    <div id="tc-historial"></div>
   </div>
+  <button onclick="buscarTcFecha()" style="width:100%; padding:12px; background:#f3f4f6; border:1px solid #e5e7eb; border-radius:10px; font-size:14px; cursor:pointer; font-family:inherit; margin-bottom:8px;">
+    <i class="ti ti-search"></i> Buscar TC
+  </button>
+  <div id="tc-buscar-resultado" style="display:none; background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:12px; margin-bottom:16px; font-size:13px; color:#15803d;"></div>
+
+  <!-- REGISTRAR TC MANUAL -->
+  <div class="section-title" style="margin-top:8px;">Registrar tipo de cambio</div>
+  <div class="form-group">
+    <label class="form-label">Moneda</label>
+    <select id="tc-moneda">
+      <option value="USD">$ Dólares (USD)</option>
+      <option value="EUR">€ Euros (EUR)</option>
+    </select>
+  </div>
+  <div class="form-row" style="gap:12px; margin-bottom:12px;">
+    <div class="form-group" style="flex:1; margin-bottom:0;">
+      <label class="form-label">Compra (₡)</label>
+      <input type="number" id="tc-valorCompra" placeholder="ej: 450" min="1" step="0.01">
+    </div>
+    <div class="form-group" style="flex:1; margin-bottom:0;">
+      <label class="form-label">Venta (₡)</label>
+      <input type="number" id="tc-valorVenta" placeholder="ej: 456" min="1" step="0.01">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Fecha</label>
+    <input type="date" id="tc-fecha">
+  </div>
+  <button class="btn-guardar" onclick="guardarTipoCambio()">
+    <i class="ti ti-check"></i> Guardar tipo de cambio
+  </button>
+  <div id="msg-ok-tc" style="display:none; text-align:center; margin-top:12px; color:#16a34a; font-size:14px;"><i class="ti ti-circle-check"></i> ¡Guardado!</div>
+  <div id="msg-err-tc" style="display:none; text-align:center; margin-top:12px; color:#dc2626; font-size:14px;"></div>
+  <div class="section-title" style="margin-top:24px;">Registros guardados</div>
+  <div id="tc-historial"></div>
+
+  <!-- ESPACIOS -->
+  <div class="section-title" style="margin-top:32px;">Mis espacios</div>
+  <p style="font-size:13px; color:#888; margin-bottom:12px;">Administrá tus espacios de trabajo.</p>
+  <div id="config-espacios-list"></div>
+
+</div>
 
   <!-- PLANES -->
 <div class="content" id="tab-planes" style="display:none">
@@ -676,6 +706,59 @@ function copiarSINPE() {
 function esFounder() {
   return perfilUsuario?.plan === 'founder';
 }
+
+async function buscarTcFecha() {
+  const moneda = document.getElementById('tc-buscar-moneda').value;
+  const fecha = document.getElementById('tc-buscar-fecha').value;
+  const resEl = document.getElementById('tc-buscar-resultado');
+
+  if(!fecha) { alert('Ingresá una fecha'); return; }
+
+  // Primero buscar en los registros guardados
+  const guardado = allTc.find(t => t.moneda === moneda && t.fecha === fecha);
+  if(guardado) {
+    resEl.innerHTML = `<b>${fecha}</b> — ya tenés este TC guardado:<br>Compra: ₡${guardado.valorCompra.toLocaleString('es-CR')} · Venta: ₡${guardado.valorVenta.toLocaleString('es-CR')}`;
+    resEl.style.display = 'block';
+    return;
+  }
+
+  // Si no está guardado, consultar Hacienda
+  resEl.innerHTML = 'Consultando...';
+  resEl.style.display = 'block';
+
+  try {
+    const monedaPrincipalCodigo = allMonedas.find(m => m.simbolo === (espacioActivo?.moneda || '₡'))?.codigo || 'CRC';
+    const res = await fetch('https://kgdxzylsdpnmfbdntyyl.supabase.co/functions/v1/get-tipo-cambio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+      body: JSON.stringify({ fecha, monedaBase: monedaPrincipalCodigo, monedaDestino: moneda })
+    });
+    const tc = await res.json();
+    if(tc.compra && tc.venta) {
+      resEl.innerHTML = `<b>${fecha}</b> — TC oficial Hacienda CR:<br>Compra: ₡${tc.compra.toLocaleString('es-CR')} · Venta: ₡${tc.venta.toLocaleString('es-CR')}<br><br>
+        <button onclick="cargarTcEnFormulario('${moneda}', '${fecha}', ${tc.compra}, ${tc.venta})" 
+          style="background:#15803d; color:#fff; border:none; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:12px; font-family:inherit;">
+          Guardar este TC
+        </button>`;
+    } else {
+      resEl.innerHTML = `No se encontró TC para ${fecha}. Podés cargarlo manualmente.`;
+      resEl.style.background = '#fef2f2';
+      resEl.style.borderColor = '#fca5a5';
+      resEl.style.color = '#dc2626';
+    }
+  } catch(e) {
+    resEl.innerHTML = 'Error al consultar. Intentá más tarde.';
+  }
+}
+
+function cargarTcEnFormulario(moneda, fecha, compra, venta) {
+  document.getElementById('tc-moneda').value = moneda;
+  document.getElementById('tc-valorCompra').value = compra;
+  document.getElementById('tc-valorVenta').value = venta;
+  document.getElementById('tc-fecha').value = fecha;
+  document.getElementById('tc-buscar-resultado').style.display = 'none';
+}
+
 
 function abrirWhatsApp() {
   const msg = encodeURIComponent('Hola, adjunto comprobante de pago de Mi Presupuesto. Mi correo es: ');
@@ -1141,34 +1224,101 @@ async function aplicarGastosFijos() {
 function renderTcHistorial() {
   const list = document.getElementById('tc-historial');
   if(!list) return;
-
-  if(!allTc.length) {
-    list.innerHTML = '<div class="empty">Sin registros aún</div>';
-    return;
-  }
+  if(!allTc.length) { list.innerHTML = '<div class="empty">Sin registros aún</div>'; return; }
 
   list.innerHTML = allTc.slice(0,20).map(t => {
     const monedaInfo = allMonedas.find(m => m.codigo === t.moneda);
     const nombreMoneda = monedaInfo ? `${monedaInfo.simbolo} ${monedaInfo.nombre}` : t.moneda;
     const badgeText = monedaInfo ? monedaInfo.codigo : t.moneda;
-    return `
-    <div class="txn-item">
+    return `<div class="txn-item">
       <div class="txn-icon ingreso" style="font-size:11px; font-weight:700;">${badgeText}</div>
       <div class="txn-info">
         <div class="txn-cat">${nombreMoneda}</div>
         <div class="txn-fecha">${new Date(t.fecha+'T12:00:00').toLocaleDateString('es-CR',{day:'numeric',month:'short',year:'numeric'})}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px;">Compra ₡${t.valorCompra?.toLocaleString('es-CR') || '—'} · Venta ₡${t.valorVenta?.toLocaleString('es-CR') || '—'}</div>
       </div>
-      <div class="txn-right">
-        <div style="font-size:12px; color:#16a34a; text-align:right;">
-          Compra: ₡${t.valorCompra ? t.valorCompra.toLocaleString('es-CR') : '—'}<br>
-          Venta: ₡${t.valorVenta ? t.valorVenta.toLocaleString('es-CR') : '—'}
-        </div>
-        <button class="delete-btn" onclick="deleteTipoCambio('${t.id}')">
-          <i class="ti ti-trash"></i>
+      <div class="txn-right" style="gap:4px;">
+        <button onclick="editarTc('${t.id}', '${t.moneda}', '${t.fecha}', ${t.valorCompra}, ${t.valorVenta})" 
+          style="background:#f3f4f6; border:none; border-radius:8px; padding:5px 7px; cursor:pointer;">
+          <i class="ti ti-pencil" style="font-size:14px;"></i>
         </button>
+        <button class="delete-btn" onclick="deleteTipoCambio('${t.id}')"><i class="ti ti-trash"></i></button>
       </div>
     </div>`;
   }).join('');
+}
+
+function editarTc(id, moneda, fecha, compra, venta) {
+  document.getElementById('tc-moneda').value = moneda;
+  document.getElementById('tc-valorCompra').value = compra;
+  document.getElementById('tc-valorVenta').value = venta;
+  document.getElementById('tc-fecha').value = fecha;
+  // Cambiar el botón guardar para que actualice en vez de insertar
+  const btn = document.querySelector('[onclick="guardarTipoCambio()"]');
+  btn.innerHTML = '<i class="ti ti-check"></i> Actualizar tipo de cambio';
+  btn.onclick = () => actualizarTipoCambio(id);
+}
+
+async function actualizarTipoCambio(id) {
+  const valorCompra = parseFloat(document.getElementById('tc-valorCompra').value);
+  const valorVenta = parseFloat(document.getElementById('tc-valorVenta').value);
+  const errEl = document.getElementById('msg-err-tc');
+
+  if(!valorCompra || !valorVenta) { errEl.textContent = 'Ingresá valores válidos'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+  if(valorVenta <= valorCompra) { errEl.textContent = 'Venta debe ser mayor a compra'; errEl.style.display='block'; setTimeout(()=>errEl.style.display='none',3000); return; }
+
+  const { error } = await sb.from('tipo_cambio').update({ valorCompra, valorVenta }).eq('id', id);
+  if(!error) {
+    const tc = allTc.find(t => t.id === id);
+    if(tc) { tc.valorCompra = valorCompra; tc.valorVenta = valorVenta; }
+    // Restaurar botón original
+    const btn = document.querySelector('[onclick]');
+    btn.innerHTML = '<i class="ti ti-check"></i> Guardar tipo de cambio';
+    btn.onclick = guardarTipoCambio;
+    document.getElementById('tc-valorCompra').value = '';
+    document.getElementById('tc-valorVenta').value = '';
+    renderTcHistorial();
+    renderDashboard();
+    const ok = document.getElementById('msg-ok-tc');
+    ok.style.display='block'; setTimeout(()=>ok.style.display='none',2000);
+  }
+}
+
+function renderConfigEspacios() {
+  const list = document.getElementById('config-espacios-list');
+  if(!list) return;
+  list.innerHTML = allEspacios.map(e => `
+    <div class="txn-item">
+      <div class="txn-icon ingreso" style="font-size:18px;">📁</div>
+      <div class="txn-info">
+        <div class="txn-cat">${e.nombre}</div>
+        <div class="txn-fecha">${e.tipo} · ${e.moneda}</div>
+      </div>
+      <div class="txn-right" style="gap:4px;">
+        <button onclick="ocultarEspacio('${e.id}')" style="background:#f3f4f6; border:none; border-radius:8px; padding:5px 7px; cursor:pointer;" title="Ocultar">
+          <i class="ti ti-eye-off" style="font-size:14px;"></i>
+        </button>
+        <button onclick="eliminarEspacio('${e.id}', '${e.nombre}')" class="delete-btn"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+async function eliminarEspacio(id, nombre) {
+  if(!confirm(`¿Eliminár "${nombre}" y todos sus datos? Esta acción es irreversible.`)) return;
+  await sb.from('transacciones').delete().eq('espacio_id', id);
+  await sb.from('tipo_cambio').delete().eq('espacio_id', id);
+  await sb.from('presupuestos').delete().eq('espacio_id', id);
+  await sb.from('categorias').delete().eq('espacio_id', id);
+  await sb.from('monedas_espacio').delete().eq('espacio_id', id);
+  await sb.from('gastos_fijos').delete().eq('espacio_id', id);
+  await sb.from('espacios').delete().eq('id', id);
+  allEspacios = allEspacios.filter(e => e.id !== id);
+  if(espacioActivo?.id === id) {
+    if(allEspacios.length) await cargarEspacio(allEspacios[0]);
+    else await crearEspacioInicial();
+  }
+  renderSelectorEspacio();
+  renderConfigEspacios();
 }
 
 function formatMonto(input) {
@@ -1305,6 +1455,12 @@ function showTab(t) {
   if(t==='nuevo-espacio') { renderCatsNuevoEspacio(); }
   if(t==='editar-espacio') { renderEditarEspacio(); }
   if(t==='presupuesto') { renderPresupuesto(); }
+  if(t==='configuracion') {
+  renderTcHistorial();
+  renderConfigEspacios();
+  document.getElementById('tc-fecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('tc-buscar-fecha').value = new Date().toISOString().slice(0,10);
+}
   if(t==='fijos') {
     const sel = document.getElementById('gf-categoria');
     sel.innerHTML = allCategorias.filter(c=>c.tipo==='egreso').map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
