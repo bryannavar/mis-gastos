@@ -1964,28 +1964,7 @@ function renderPresupuesto() {
   const moneda = espacioActivo?.moneda || '₡';
   const tipoPeriodo = espacioActivo?.tipo_periodo || 'mensual';
 
-  const tituloEl = document.getElementById('presupuesto-titulo');
-const descEl = document.getElementById('presupuesto-descripcion');
-if(tituloEl && descEl) {
-  if(tipoPeriodo === 'anual') {
-    tituloEl.textContent = 'Presupuesto anual';
-    descEl.textContent = 'Definí cuánto querés gastar por categoría este año.';
-  } else if(tipoPeriodo === 'especifico') {
-    tituloEl.textContent = 'Presupuesto del período';
-    descEl.textContent = `Definí cuánto querés gastar por categoría entre ${periodoLabel}.`;
-  } else {
-    tituloEl.textContent = 'Presupuesto del mes';
-    descEl.textContent = 'Definí cuánto querés gastar por categoría este mes.';
-  }
-}
-
-  const labelMoneda = document.getElementById('presupuesto-moneda-label');
-  if(labelMoneda) {
-    const monedaInfo = allMonedas.find(m => m.simbolo === moneda);
-    labelMoneda.textContent = monedaInfo ? monedaInfo.nombre : moneda;
-  }
-
-  // Calcular rango de fechas según período
+  // Calcular rango de fechas según período PRIMERO
   let periodoLabel = '';
   let txnFiltradas = [];
   let periodoKey = '';
@@ -2008,11 +1987,31 @@ if(tituloEl && descEl) {
     txnFiltradas = allTxn.filter(t => t.fecha && t.fecha >= inicio && t.fecha <= fin && t.tipo === 'egreso');
   }
 
-  // Actualizar label del período
+  // Ahora sí actualizar títulos
+  const tituloEl = document.getElementById('presupuesto-titulo');
+  const descEl = document.getElementById('presupuesto-descripcion');
+  if(tituloEl && descEl) {
+    if(tipoPeriodo === 'anual') {
+      tituloEl.textContent = 'Presupuesto anual';
+      descEl.textContent = 'Definí cuánto querés gastar por categoría este año.';
+    } else if(tipoPeriodo === 'especifico') {
+      tituloEl.textContent = 'Presupuesto del período';
+      descEl.textContent = `Definí cuánto querés gastar por categoría entre ${periodoLabel}.`;
+    } else {
+      tituloEl.textContent = 'Presupuesto del mes';
+      descEl.textContent = 'Definí cuánto querés gastar por categoría este mes.';
+    }
+  }
+
+  const labelMoneda = document.getElementById('presupuesto-moneda-label');
+  if(labelMoneda) {
+    const monedaInfo = allMonedas.find(m => m.simbolo === moneda);
+    labelMoneda.textContent = monedaInfo ? monedaInfo.nombre : moneda;
+  }
+
   const labelPeriodo = document.getElementById('presupuesto-periodo-label');
   if(labelPeriodo) labelPeriodo.textContent = periodoLabel;
 
-  // Botón importar — solo para mensual
   const btnImportar = document.getElementById('btn-importar-presupuesto');
   if(btnImportar) btnImportar.style.display = tipoPeriodo === 'mensual' ? '' : 'none';
 
@@ -2057,7 +2056,6 @@ if(tituloEl && descEl) {
     </div>`;
   }).join('');
 }
-
 function formatMontoPresupuesto(input) {
   let raw = input.value.replace(/[^0-9.]/g, '');
   input.value = raw;
