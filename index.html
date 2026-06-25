@@ -730,6 +730,9 @@ const SUPABASE_URL = 'https://kgdxzylsdpnmfbdntyyl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_QHVZ_-NZLrg9LMdxTqw6jQ_duI6MJc5';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+const isNative = window.location.protocol === 'capacitor:' || (window.Capacitor?.isNative ?? false);
+const redirectUrl = isNative ? 'com.mipresupuesto.app://login-callback' : window.location.origin;
+
 const CATS_EGRESO = ['Vivienda','Servicios','Alimentación','Transporte','Salud','Educación','Entretenimiento','Suscripciones','Ropa y compras','Deudas','Ahorro e inversión','Otros'];
 const CATS_INGRESO = ['Salario','Servicios Profesionales','Otros ingresos'];
 
@@ -904,7 +907,7 @@ function mesLabel(m) {
 async function loginGoogle() {
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin }
+    options: { redirectTo: redirectUrl }
   });
   if(error) showLoginErr(error.message);
 }
@@ -922,8 +925,7 @@ async function sendMagicLink() {
   if(!email) { showLoginErr('Ingresá tu correo'); return; }
   const btn = document.querySelector('#screen-login .btn-primary');
   btn.disabled = true; btn.textContent = 'Enviando...';
-  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
-  btn.disabled = false; btn.innerHTML = '<i class="ti ti-send" style="margin-right:6px"></i> Enviar enlace de acceso';
+const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectUrl } });  btn.disabled = false; btn.innerHTML = '<i class="ti ti-send" style="margin-right:6px"></i> Enviar enlace de acceso';
   if(error) { showLoginErr(error.message); return; }
   document.getElementById('login-msg').style.display = 'block';
   document.getElementById('login-err').style.display = 'none';
