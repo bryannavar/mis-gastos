@@ -757,8 +757,8 @@
 const SUPABASE_URL = 'https://kgdxzylsdpnmfbdntyyl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_QHVZ_-NZLrg9LMdxTqw6jQ_duI6MJc5';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-const isNative = window.location.protocol === 'capacitor:' || (window.Capacitor?.isNative ?? false);
+const CapacitorGoogleAuth = window.Capacitor?.Plugins?.GoogleAuth;
+const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 const redirectUrl = isNative 
   ? 'com.mipresupuesto.app://login-callback' 
   : window.location.origin;
@@ -950,32 +950,33 @@ function mesLabel(m) {
 
 // AUTH
 async function loginGoogle() {
-  const { data, error } = await sb.auth.signInWithOAuth({
-    provider: 'google',
-    options: { 
-      redirectTo: redirectUrl,
-      skipBrowserRedirect: true
-    }
-  });
-  if(error) { showLoginErr(error.message); return; }
   if(isNative) {
-    await Capacitor.Plugins.Browser.open({ url: data.url });
-    Capacitor.Plugins.Browser.addListener('browserPageLoaded', async () => {
-      const { data: { session } } = await sb.auth.getSession();
-      if(session) {
-        await Capacitor.Plugins.Browser.close();
-        showApp(false);
-        await Promise.all([loadEspacios(), loadPerfil()]);
-        if(allEspacios.length === 0) {
-          await crearEspacioInicial();
-        } else {
-          await cargarEspacio(allEspacios[0]);
-          showApp(true);
-        }
+    try {
+      await Capacitor.Plugins.GoogleSignIn.initialize({
+        clientId: '906715013294-0agltm3egr5ak5vamloqfdr7b42ovpd1.apps.googleusercontent.com'
+      });
+      const { idToken } = await Capacitor.Plugins.GoogleSignIn.signIn();
+      const { data, error } = await sb.auth.signInWithIdToken({
+        provider: 'google',
+        token: idToken
+      });
+      if(error) { showLoginErr(error.message); return; }
+      showApp(false);
+      await Promise.all([loadEspacios(), loadPerfil()]);
+      if(allEspacios.length === 0) {
+        await crearEspacioInicial();
+      } else {
+        await cargarEspacio(allEspacios[0]);
+        showApp(true);
       }
-    });
+    } catch(e) {
+      showLoginErr('Error al iniciar con Google: ' + e.message);
+    }
   } else {
-    window.location.href = data.url;
+    window.location.href = (await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: redirectUrl, skipBrowserRedirect: false }
+    })).data.url;
   }
 }
 

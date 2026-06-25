@@ -1,5 +1,10 @@
 {
   "appId": "com.mipresupuesto.app",
   "appName": "Mi Presupuesto",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "GoogleSignIn": {
+      "clientId": "906715013294-0agltm3egr5ak5vamloqfdr7b42ovpd1.apps.googleusercontent.com"
+    }
+  }
 }
