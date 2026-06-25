@@ -2309,9 +2309,10 @@ async function guardarEdicionEspacio() {
   renderDashboard();
   document.getElementById('ee-msg-ok').style.display = 'block';
   setTimeout(() => {
-    document.getElementById('ee-msg-ok').style.display = 'none';
-    showTab('dashboard');
-  }, 1500);
+  document.getElementById('ee-msg-ok').style.display = 'none';
+  showApp(true);
+  showTab('dashboard');
+}, 1500);
 }
 
 async function guardarPresupuesto(categoria, input, periodoKey) {
