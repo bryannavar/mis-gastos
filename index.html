@@ -928,6 +928,19 @@ async function loginGoogle() {
   if(error) { showLoginErr(error.message); return; }
   if(isNative) {
     await Capacitor.Plugins.Browser.open({ url: data.url });
+    Capacitor.Plugins.Browser.addListener('browserFinished', async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if(session) {
+        showApp(false);
+        await Promise.all([loadEspacios(), loadPerfil()]);
+        if(allEspacios.length === 0) {
+          await crearEspacioInicial();
+        } else {
+          await cargarEspacio(allEspacios[0]);
+          showApp(true);
+        }
+      }
+    });
   } else {
     window.location.href = data.url;
   }
