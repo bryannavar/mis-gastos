@@ -196,9 +196,22 @@
     <div style="font-size:15px; font-weight:600; color:#1a1a1a; margin-bottom:16px; text-align:center;">Ingresá a tu cuenta</div>
     <label style="font-size:13px; color:#555; font-weight:500; display:block; margin-bottom:6px;">Correo electrónico</label>
     <input type="email" id="inp-email" placeholder="tucorreo@gmail.com" style="width:100%; padding:12px 14px; border:1px solid #e0e0e0; border-radius:10px; font-size:15px; margin-bottom:12px; font-family:inherit; outline:none;">
-    <button class="btn-primary" onclick="sendMagicLink()">
-      <i class="ti ti-send" style="margin-right:6px"></i> Enviar enlace de acceso
+    <button class="btn-primary" onclick="sendOtp()">
+      <i class="ti ti-send" style="margin-right:6px"></i> Enviar código de acceso
     </button>
+
+    <!-- Paso 2: ingresar código OTP -->
+    <div id="otp-step" style="display:none; margin-top:16px;">
+      <label style="font-size:13px; color:#555; font-weight:500; display:block; margin-bottom:6px;">Código de 6 dígitos</label>
+      <input type="text" id="inp-otp" placeholder="123456" maxlength="6" inputmode="numeric"
+        style="width:100%; padding:12px 14px; border:1px solid #e0e0e0; border-radius:10px; font-size:22px; margin-bottom:12px; font-family:inherit; outline:none; text-align:center; letter-spacing:8px;">
+      <button class="btn-primary" onclick="verifyOtp()">
+        <i class="ti ti-check" style="margin-right:6px"></i> Ingresar
+      </button>
+      <button onclick="resetOtp()" style="width:100%; padding:10px; background:none; border:none; font-size:13px; color:#888; cursor:pointer; margin-top:8px; font-family:inherit;">
+        Cambiar correo
+      </button>
+    </div>
     <div style="display:flex; align-items:center; gap:10px; margin:16px 0;">
       <div style="flex:1; height:1px; background:#e0e0e0;"></div>
       <span style="font-size:12px; color:#aaa;">o</span>
@@ -213,7 +226,7 @@
       Ingresar con Facebook
     </button>
     <div class="login-msg" id="login-msg">
-      <i class="ti ti-circle-check"></i> ¡Listo! Revisá tu correo y tocá el enlace para entrar.
+      <i class="ti ti-circle-check"></i> ¡Listo! Revisá tu correo y escribí el código de 6 dígitos.
     </div>
     <div class="login-err" id="login-err"></div>
   </div>
@@ -724,8 +737,8 @@
   </div>
 
 </div>
-
 <script>
+
 const SUPABASE_URL = 'https://kgdxzylsdpnmfbdntyyl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_QHVZ_-NZLrg9LMdxTqw6jQ_duI6MJc5';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -905,11 +918,19 @@ function mesLabel(m) {
 
 // AUTH
 async function loginGoogle() {
-  const { error } = await sb.auth.signInWithOAuth({
+  const { data, error } = await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: redirectUrl }
+    options: { 
+      redirectTo: redirectUrl,
+      skipBrowserRedirect: true
+    }
   });
-  if(error) showLoginErr(error.message);
+  if(error) { showLoginErr(error.message); return; }
+  if(isNative) {
+    await Capacitor.Plugins.Browser.open({ url: data.url });
+  } else {
+    window.location.href = data.url;
+  }
 }
 
 async function loginFacebook() {
@@ -920,14 +941,38 @@ async function loginFacebook() {
   if(error) showLoginErr(error.message);
 }
 
-async function sendMagicLink() {
+let otpEmail = '';
+
+async function sendOtp() {
   const email = document.getElementById('inp-email').value.trim();
   if(!email) { showLoginErr('Ingresá tu correo'); return; }
   const btn = document.querySelector('#screen-login .btn-primary');
   btn.disabled = true; btn.textContent = 'Enviando...';
-const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectUrl } });  btn.disabled = false; btn.innerHTML = '<i class="ti ti-send" style="margin-right:6px"></i> Enviar enlace de acceso';
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-send" style="margin-right:6px"></i> Enviar código de acceso';
   if(error) { showLoginErr(error.message); return; }
+  otpEmail = email;
   document.getElementById('login-msg').style.display = 'block';
+  document.getElementById('login-err').style.display = 'none';
+  document.getElementById('otp-step').style.display = 'block';
+  document.getElementById('inp-otp').focus();
+}
+
+async function verifyOtp() {
+  const token = document.getElementById('inp-otp').value.trim();
+  if(!token || token.length !== 6) { showLoginErr('Ingresá el código de 6 dígitos'); return; }
+  const btn = document.querySelector('#otp-step .btn-primary');
+  btn.disabled = true; btn.textContent = 'Verificando...';
+  const { error } = await sb.auth.verifyOtp({ email: otpEmail, token, type: 'email' });
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-check" style="margin-right:6px"></i> Ingresar';
+  if(error) { showLoginErr('Código incorrecto o expirado'); return; }
+}
+
+function resetOtp() {
+  otpEmail = '';
+  document.getElementById('inp-otp').value = '';
+  document.getElementById('otp-step').style.display = 'none';
+  document.getElementById('login-msg').style.display = 'none';
   document.getElementById('login-err').style.display = 'none';
 }
 
@@ -939,6 +984,9 @@ function showLoginErr(msg) {
 async function logout() {
   await sb.auth.signOut();
   allTxn = [];
+  otpEmail = '';
+  document.getElementById('inp-otp').value = '';
+  document.getElementById('otp-step').style.display = 'none';
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('inp-email').value = '';
