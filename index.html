@@ -1323,6 +1323,7 @@ async function guardarTipoCambio() {
   document.getElementById('btn-cancelar-tc').style.display = 'none';
   document.getElementById('btn-guardar-tc').innerHTML = '<i class="ti ti-check"></i> Guardar tipo de cambio';
   document.getElementById('btn-guardar-tc').onclick = guardarTipoCambio;
+  await new Promise(r => setTimeout(r, 500));
   await loadTc();
   renderTcHistorial();
   renderDashboard();
