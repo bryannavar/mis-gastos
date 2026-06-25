@@ -42,7 +42,7 @@
     .login-err { margin-top: 14px; font-size: 14px; text-align: center; color: #dc2626; display: none; }
 
     /* HEADER */
-    .header { background: #fff; border-bottom: 0.5px solid #e0e0e0; padding: 12px 16px 0; position: sticky; top: 0; z-index: 10; }
+    .header { background: #fff; border-bottom: 2px solid #16a34a; padding: 12px 16px 0; position: sticky; top: 0; z-index: 10; }
     .header-row1 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
     .header-row2 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
     .header-row2-btns { display: flex; align-items: center; gap: 6px; }
@@ -79,7 +79,7 @@
       font-family: inherit;
       border-top: 2px solid transparent;
     }
-    .tab.active { color: #1a1a1a; border-top-color: #1a1a1a; font-weight: 500; }
+    .tab.active { color: #16a34a; border-top-color: #16a34a; font-weight: 500; }
     .tab i { font-size: 20px; }
 
     .content { padding: 16px; }
@@ -87,17 +87,19 @@
     /* MONEDA TOGGLE */
     .moneda-toggle { display: flex; gap: 6px; margin-bottom: 14px; }
     .moneda-btn { flex: 1; padding: 8px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fff; font-size: 14px; cursor: pointer; font-family: inherit; color: #888; }
-    .moneda-btn.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; font-weight: 500; }
+    .moneda-btn.active { background: #16a34a; color: #fff; border-color: #16a34a; font-weight: 500; }
 
     /* CARDS */
-    .saldo-card { background: #f8f8f8; border-radius: 16px; padding: 20px; margin-bottom: 14px; }
-    .saldo-label { font-size: 12px; color: #888; margin-bottom: 4px; }
-    .saldo-mes { font-size: 12px; color: #aaa; margin-top: 4px; }
-    .saldo-monto { font-size: 34px; font-weight: 600; color: #1a1a1a; }
-    .saldo-monto.positivo { color: #16a34a; }
-    .saldo-monto.negativo { color: #dc2626; }
+    .saldo-card { background: linear-gradient(135deg, #1a1a1a 0%, #16a34a 100%); border-radius: 16px; padding: 20px; margin-bottom: 14px; }
+    .saldo-label { font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 4px; }
+    .saldo-mes { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+    .saldo-monto { font-size: 34px; font-weight: 600; color: #fff; }
+    .saldo-monto.positivo { color: #fff; }
+    .saldo-monto.negativo { color: #fca5a5; }
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
     .stat-card { background: #f8f8f8; border-radius: 12px; padding: 14px; }
+    .stat-card:first-child { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .stat-card:last-child { background: #fef2f2; border: 1px solid #fecaca; }
     .stat-label { font-size: 11px; color: #888; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
     .stat-val { font-size: 18px; font-weight: 600; }
     .stat-val.ingreso { color: #16a34a; }
@@ -124,7 +126,7 @@
     .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
     .bar-label { font-size: 12px; color: #555; width: 100px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .bar-track { flex: 1; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 4px; background: #dc2626; }
+    .bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #16a34a, #dc2626); }
     .bar-val { font-size: 11px; color: #888; width: 80px; text-align: right; flex-shrink: 0; }
 
     /* FORM */
@@ -134,14 +136,14 @@
       width: 100%; padding: 11px 14px; border: 1px solid #e0e0e0; border-radius: 10px;
       font-size: 15px; color: #1a1a1a; background: #fff; -webkit-appearance: none; appearance: none; font-family: inherit;
     }
-    input:focus, select:focus { outline: none; border-color: #888; }
+    input:focus, select:focus { outline: none; border-color: #16a34a; }
     select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
     .tipo-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .tipo-btn { padding: 12px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fff; font-size: 15px; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; }
     .tipo-btn.selected-ingreso { background: #dcfce7; border-color: #16a34a; color: #16a34a; font-weight: 500; }
     .tipo-btn.selected-egreso { background: #fee2e2; border-color: #dc2626; color: #dc2626; font-weight: 500; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .btn-guardar { width: 100%; padding: 14px; background: #1a1a1a; border: none; border-radius: 12px; font-size: 16px; font-weight: 500; cursor: pointer; color: #fff; margin-top: 8px; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-guardar { width: 100%; padding: 14px; background: #16a34a; border: none; border-radius: 12px; font-size: 16px; font-weight: 500; cursor: pointer; color: #fff; margin-top: 8px; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-guardar:active { transform: scale(0.98); }
     .btn-guardar:disabled { background: #ccc; cursor: not-allowed; }
     .msg-ok { display: none; text-align: center; margin-top: 12px; color: #16a34a; font-size: 14px; }
