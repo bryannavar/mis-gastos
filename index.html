@@ -960,7 +960,7 @@ async function sendOtp() {
 
 async function verifyOtp() {
   const token = document.getElementById('inp-otp').value.trim();
-  if(!token || token.length !== 6) { showLoginErr('Ingresá el código de 6 dígitos'); return; }
+  if(!token || token.length !== 8) { showLoginErr('Ingresá el código de 8 dígitos'); return; }
   const btn = document.querySelector('#otp-step .btn-primary');
   btn.disabled = true; btn.textContent = 'Verificando...';
   const { error } = await sb.auth.verifyOtp({ email: otpEmail, token, type: 'email' });
