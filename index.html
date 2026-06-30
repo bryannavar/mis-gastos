@@ -1518,7 +1518,7 @@ function renderConfigEspacios() {
   if(!list) return;
   list.innerHTML = allEspacios.map(e => `
     <div class="txn-item" style="${e.oculto ? 'opacity:0.5;' : ''}">
-      <div class="txn-icon ingreso" style="font-size:18px;">📁</div>
+      <div class="txn-icon ingreso"><i class="ti ti-folder"></i></div>
       <div class="txn-info">
         <div class="txn-cat">${e.nombre} ${e.oculto ? '<span style="font-size:10px;background:#f3f4f6;padding:2px 6px;border-radius:10px;color:#888;">Oculto</span>' : ''}</div>
         <div class="txn-fecha">${e.tipo} · ${e.moneda} · ${e.tipo_periodo === 'mensual' ? 'Mensual' : e.tipo_periodo === 'anual' ? 'Anual' : 'Período específico'}</div>
@@ -1622,7 +1622,7 @@ async function agregarTxn() {
         } catch(e) { console.error('Error TC:', e); }
       } else {
         // Fecha pasada — avisar pero continuar
-        document.getElementById('tc-warning').textContent = `⚠ No hay tipo de cambio para el ${fecha}. La transacción se guardó pero debés cargar el TC en Config para que los totales sean correctos.`;
+        document.getElementById('tc-warning').textContent = ' No hay tipo de cambio para el ${fecha}. La transacción se guardó pero debés cargar el TC en Config para que los totales sean correctos.`;
         document.getElementById('tc-warning').style.display = 'block';
       }
     }
@@ -1739,7 +1739,7 @@ function txnHTML(t) {
   }
 
   return `<div class="txn-item">
-    <div class="txn-icon ${t.tipo}">${esFijo ? '🔄' : `<i class="ti ${icon}"></i>`}</div>
+    <div class="txn-icon ${t.tipo}">${esFijo ? '<i class="ti ti-repeat"></i>' : `<i class="ti ${icon}"></i>`}</div>
     <div class="txn-info">
       <div class="txn-cat">${t.categoria}${esFijo ? ' <span style="font-size:10px;color:#888;background:#f3f4f6;padding:2px 6px;border-radius:10px;">Fijo</span>' : ''}</div>
       ${notaVisible ? `<div class="txn-nota">${notaVisible}</div>` : ''}
