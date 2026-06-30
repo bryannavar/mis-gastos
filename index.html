@@ -1622,7 +1622,7 @@ async function agregarTxn() {
         } catch(e) { console.error('Error TC:', e); }
       } else {
         // Fecha pasada — avisar pero continuar
-        document.getElementById('tc-warning').textContent = ' No hay tipo de cambio para el ${fecha}. La transacción se guardó pero debés cargar el TC en Config para que los totales sean correctos.`;
+        document.getElementById('tc-warning').textContent = `No hay tipo de cambio para el ${fecha}. La transacción se guardó pero debés cargar el TC en Config para que los totales sean correctos.`;
         document.getElementById('tc-warning').style.display = 'block';
       }
     }
