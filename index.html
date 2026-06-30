@@ -157,7 +157,7 @@
 
 <!-- LOADING -->
 <div id="screen-loading" style="display:flex; align-items:center; justify-content:center; min-height:100vh; flex-direction:column; gap:16px;">
-  <div style="font-size:40px;">💰</div>
+  <div style="font-size:40px; color:#16a34a;"><i class="ti ti-wallet"></i></div>
   <div style="width:32px; height:32px; border:3px solid #e0e0e0; border-top-color:#111827; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
 </div>
 <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
@@ -167,7 +167,7 @@
 
   <!-- Hero -->
   <div style="text-align:center; margin-bottom:28px;">
-    <img src="logo.png" style="width:80px; height:80px; border-radius:18px; margin-bottom:10px;">
+    <img src="icon.png" style="width:80px; height:80px; border-radius:18px; margin-bottom:10px;">
     <div style="font-size:26px; font-weight:700; color:#1a1a1a; margin-bottom:6px;">Mi Presupuesto</div>
     <div style="font-size:14px; color:#6b7280; max-width:320px; margin:0 auto; line-height:1.6;">Controlá tus ingresos y gastos en colones y dólares, con presupuesto mensual por categoría.</div>
   </div>
@@ -175,19 +175,19 @@
   <!-- Features en fila -->
   <div style="display:flex; gap:10px; margin-bottom:28px; width:100%; max-width:380px;">
     <div style="flex:1; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:14px 10px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.05);">
-      <div style="font-size:22px; margin-bottom:6px;">📊</div>
+      <i class="ti ti-chart-pie" style="font-size:22px; color:#16a34a; display:block; margin-bottom:6px;"></i>
       <div style="font-size:12px; font-weight:600; color:#1a1a1a;">Por categoría</div>
     </div>
     <div style="flex:1; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:14px 10px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.05);">
-      <div style="font-size:22px; margin-bottom:6px;">💱</div>
+      <i class="ti ti-arrows-exchange" style="font-size:22px; color:#16a34a; display:block; margin-bottom:6px;"></i>
       <div style="font-size:12px; font-weight:600; color:#1a1a1a;">₡ y $ </div>
     </div>
     <div style="flex:1; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:14px 10px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.05);">
-      <div style="font-size:22px; margin-bottom:6px;">🎯</div>
+      <i class="ti ti-target" style="font-size:22px; color:#16a34a; display:block; margin-bottom:6px;"></i>
       <div style="font-size:12px; font-weight:600; color:#1a1a1a;">Presupuesto</div>
     </div>
     <div style="flex:1; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:14px 10px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.05);">
-      <div style="font-size:22px; margin-bottom:6px;">🔒</div>
+      <i class="ti ti-lock" style="font-size:22px; color:#16a34a; display:block; margin-bottom:6px;"></i>
       <div style="font-size:12px; font-weight:600; color:#1a1a1a;">Privado</div>
     </div>
   </div>
@@ -248,7 +248,7 @@
 
   <!-- Footer -->
   <div style="text-align:center; margin-top:24px;">
-    <p style="font-size:13px; color:#888;">🔒 Tu información es 100% privada y confidencial</p>
+    <p style="font-size:13px; color:#888;"><i class="ti ti-lock" style="font-size:13px; vertical-align:-1px;"></i> Tu información es 100% privada y confidencial</p>
     <p style="font-size:11px; color:#bbb; margin-top:4px;">Desarrollado por <span style="color:#777; font-weight:500;">Bryan Navarro Jiménez</span> · © 2026 mipresupuestocr.com</p>
     <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
       <a href="/privacidad.html" style="font-size:13px; color:#6b7280; text-decoration:none; background:#f3f4f6; padding:6px 14px; border-radius:20px; font-weight:500;">Política de Privacidad</a>
@@ -363,7 +363,7 @@
   <p style="font-size:13px; color:#888; margin-bottom:16px; line-height:1.6;">Registrá tus gastos recurrentes. Se aplicarán automáticamente cada mes como transacciones reales.</p>
 
   <div id="gf-aviso-periodo" style="display:none; background:#fef3c7; border:1px solid #fcd34d; border-radius:10px; padding:12px; font-size:13px; color:#92400e; margin-bottom:16px;">
-    ⚠ Los gastos fijos solo aplican para espacios con período mensual.
+    <i class="ti ti-alert-triangle" style="font-size:14px; vertical-align:-2px;"></i> Los gastos fijos solo aplican para espacios con período mensual.
   </div>
 
   <div id="gf-form">
@@ -426,7 +426,7 @@
 </div>
   </div>
   <div style="margin-bottom:14px;">
-    <input type="text" id="hist-buscar" placeholder="🔍 Buscar por categoría, nota o monto..." 
+    <input type="text" id="hist-buscar" placeholder="Buscar por categoría, nota o monto..."
       style="width:100%; padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; font-size:14px; font-family:inherit;"
       oninput="renderHistorial()">
   </div>
@@ -603,9 +603,9 @@
     <div class="form-group">
   <label class="form-label">Tipo de presupuesto</label>
   <select id="ne-periodo" onchange="togglePeriodoEspacio()">
-    <option value="mensual">📅 Mensual</option>
-    <option value="anual">📆 Anual</option>
-    <option value="especifico">🗓️ Período específico</option>
+    <option value="mensual">Mensual</option>
+    <option value="anual">Anual</option>
+    <option value="especifico">Período específico</option>
   </select>
 </div>
 <div id="ne-periodo-fechas" style="display:none;">
@@ -704,53 +704,44 @@
   <!-- AYUDA -->
 <div class="content" id="tab-ayuda" style="display:none">
   <div class="section-title">¿Cómo usar Mi Presupuesto?</div>
-
   <div style="margin-bottom:16px;">
-    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🏠 Inicio</div>
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;"><i class="ti ti-home" style="font-size:15px; color:#16a34a; vertical-align:-2px;"></i> Inicio</div>
     <p style="font-size:13px; color:#555; line-height:1.6;">Muestra el saldo del mes, ingresos, egresos y las últimas transacciones. Todo se consolida en la moneda principal del espacio.</p>
   </div>
-
   <div style="margin-bottom:16px;">
-    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">➕ Agregar</div>
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;"><i class="ti ti-plus" style="font-size:15px; color:#16a34a; vertical-align:-2px;"></i> Agregar</div>
     <p style="font-size:13px; color:#555; line-height:1.6;">Registrá ingresos y egresos. Si la transacción es en moneda extranjera y es de hoy, el tipo de cambio se obtiene automáticamente. Para fechas pasadas debés cargarlo manualmente en Config.</p>
   </div>
-
   <div style="margin-bottom:16px;">
-    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🔄 Fijos</div>
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;"><i class="ti ti-refresh" style="font-size:15px; color:#16a34a; vertical-align:-2px;"></i> Fijos</div>
     <p style="font-size:13px; color:#555; line-height:1.6;">Registrá gastos que se repiten cada mes (Netflix, alquiler, etc.). Se aplican automáticamente al abrir la app cada mes en el día que definiste.</p>
   </div>
-
   <div style="margin-bottom:16px;">
-    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">🎯 Presupuesto</div>
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;"><i class="ti ti-target" style="font-size:15px; color:#16a34a; vertical-align:-2px;"></i> Presupuesto</div>
     <p style="font-size:13px; color:#555; line-height:1.6;">Definí cuánto querés gastar por categoría cada mes. La barra muestra cuánto llevás gastado. Podés importar el presupuesto del mes anterior con un clic.</p>
   </div>
-
   <div style="margin-bottom:16px;">
-    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">📋 Historial</div>
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;"><i class="ti ti-list" style="font-size:15px; color:#16a34a; vertical-align:-2px;"></i> Historial</div>
     <p style="font-size:13px; color:#555; line-height:1.6;">Consultá todas las transacciones de cualquier mes y el resumen del presupuesto de ese período.</p>
   </div>
-
   <div style="margin-bottom:16px;">
-    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">⚙️ Config</div>
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;"><i class="ti ti-settings" style="font-size:15px; color:#16a34a; vertical-align:-2px;"></i> Config</div>
     <p style="font-size:13px; color:#555; line-height:1.6;">Registrá el tipo de cambio manualmente para fechas pasadas. Podés editar o borrar registros existentes.</p>
   </div>
-
   <div style="margin-bottom:16px;">
-    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">📁 Espacios</div>
-    <p style="font-size:13px; color:#555; line-height:1.6;">Creá espacios separados para tu vida personal, negocio o pyme. Cada espacio tiene sus propias transacciones, presupuestos y tipo de cambio. Usá el lápiz ✏️ para editar el espacio activo y el + para crear uno nuevo.</p>
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;"><i class="ti ti-folder" style="font-size:15px; color:#16a34a; vertical-align:-2px;"></i> Espacios</div>
+    <p style="font-size:13px; color:#555; line-height:1.6;">Creá espacios separados para tu vida personal, negocio o pyme. Cada espacio tiene sus propias transacciones, presupuestos y tipo de cambio. Usá el lápiz <i class="ti ti-pencil" style="font-size:13px; vertical-align:-1px;"></i> para editar el espacio activo y el + para crear uno nuevo.</p>
   </div>
-
   <div style="margin-bottom:16px;">
-    <div style="font-weight:600; font-size:14px; margin-bottom:6px;">💱 Tipo de cambio</div>
+    <div style="font-weight:600; font-size:14px; margin-bottom:6px;"><i class="ti ti-arrows-exchange" style="font-size:15px; color:#16a34a; vertical-align:-2px;"></i> Tipo de cambio</div>
     <p style="font-size:13px; color:#555; line-height:1.6;">Para transacciones en dólares con fecha de hoy, el sistema obtiene el tipo de cambio automáticamente desde el Ministerio de Hacienda de Costa Rica. Para otras fechas o monedas, cargalo manualmente en Config.</p>
   </div>
 </div>
   
   <div style="text-align:center; padding: 20px 16px; border-top: 0.5px solid #e8e8e8; margin-top: 8px;">
-    <p style="font-size: 13px; color: #555; margin-bottom: 4px;">🔒 Tu información es 100% privada y confidencial</p>
+    <p style="font-size: 13px; color: #555; margin-bottom: 4px;"><i class="ti ti-lock" style="font-size:13px; vertical-align:-1px;"></i> Tu información es 100% privada y confidencial</p>
     <p style="font-size: 11px; color: #bbb;">Desarrollado por <span style="color:#888; font-weight:500;">Bryan Navarro Jiménez</span> · © 2026 mipresupuestocr.com</p>
   </div>
-
 </div>
 <script>
 
