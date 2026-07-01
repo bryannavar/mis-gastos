@@ -993,6 +993,18 @@ async function sendOtp() {
   if(!email) { showLoginErr('Ingresá tu correo'); return; }
   const btn = document.querySelector('#screen-login .btn-primary');
   btn.disabled = true; btn.textContent = 'Enviando...';
+
+  // Cuenta demo para revisores
+  if(email === 'demo@mipresupuestocr.com') {
+    btn.disabled = false; btn.innerHTML = '<i class="ti ti-send" style="margin-right:6px"></i> Enviar código de acceso';
+    otpEmail = email;
+    document.getElementById('login-msg').style.display = 'block';
+    document.getElementById('login-err').style.display = 'none';
+    document.getElementById('otp-step').style.display = 'block';
+    document.getElementById('inp-otp').focus();
+    return;
+  }
+
   const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
   btn.disabled = false; btn.innerHTML = '<i class="ti ti-send" style="margin-right:6px"></i> Enviar código de acceso';
   if(error) { showLoginErr(error.message); return; }
@@ -1008,6 +1020,26 @@ async function verifyOtp() {
   if(!token || token.length !== 8) { showLoginErr('Ingresá el código de 8 dígitos'); return; }
   const btn = document.querySelector('#otp-step .btn-primary');
   btn.disabled = true; btn.textContent = 'Verificando...';
+
+  // Cuenta demo para revisores
+  if(otpEmail === 'demo@mipresupuestocr.com' && token === '12345678') {
+    const { data, error } = await sb.auth.signInWithPassword({
+      email: 'demo@mipresupuestocr.com',
+      password: 'Demo2026!!'
+    });
+    btn.disabled = false; btn.innerHTML = '<i class="ti ti-check" style="margin-right:6px"></i> Ingresar';
+    if(error) { showLoginErr('Error en cuenta demo'); return; }
+    showApp(false);
+    await Promise.all([loadEspacios(), loadPerfil()]);
+    if(allEspacios.length === 0) {
+      await crearEspacioInicial();
+    } else {
+      await cargarEspacio(allEspacios[0]);
+      showApp(true);
+    }
+    return;
+  }
+
   const { data, error } = await sb.auth.verifyOtp({ email: otpEmail, token, type: 'email' });
   btn.disabled = false; btn.innerHTML = '<i class="ti ti-check" style="margin-right:6px"></i> Ingresar';
   if(error) { showLoginErr('Código incorrecto o expirado'); return; }
