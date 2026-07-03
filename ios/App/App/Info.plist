@@ -27,12 +27,12 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.312501895578-4f9pjlbilnjlto4dtm9gnn3o3f5vbfb6</string>
+				<string>com.googleusercontent.apps.906715013294-v8pnu28idil9rbv3c9c9dvkd46oe6044</string>
 			</array>
 		</dict>
 	</array>
 	<key>GIDClientID</key>
-	<string>312501895578-4f9pjlbilnjlto4dtm9gnn3o3f5vbfb6.apps.googleusercontent.com</string>
+	<string>906715013294-v8pnu28idil9rbv3c9c9dvkd46oe6044.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
