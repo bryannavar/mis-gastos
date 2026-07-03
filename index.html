@@ -960,7 +960,7 @@ async function loginGoogle() {
       // Detectar plataforma para usar el Client ID correcto
       const isIOS = window.Capacitor?.getPlatform() === 'ios';
       const clientId = isIOS
-        ? '312501895578-4f9pjlbilnjlto4dtm9gnn3o3f5vbfb6.apps.googleusercontent.com'
+        ? '906715013294-v8pnu28idil9rbv3c9c9dvkd46oe6044.apps.googleusercontent.com'
         : '906715013294-0agltm3egr5ak5vamloqfdr7b42ovpd1.apps.googleusercontent.com';
 
       await Capacitor.Plugins.GoogleSignIn.initialize({ clientId });
