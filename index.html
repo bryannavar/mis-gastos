@@ -1423,8 +1423,16 @@ function renderGastosFijos() {
 async function agregarGastoFijo() {
   const nombre = document.getElementById('gf-nombre').value.trim();
   const moneda = document.getElementById('gf-moneda').value;
-  const raw = document.getElementById('gf-monto').value;
-  const monto = parseFloat(raw.replace(/[^0-9.]/g, ''));
+  const raw = document.getElementById('gf-monto').value.trim();
+  const tienePunto = raw.includes('.');
+  const tieneComa = raw.includes(',');
+  let normalizado = raw;
+  if(tieneComa && tienePunto) {
+    normalizado = raw.replace(/\./g, '').replace(',', '.');
+  } else if(tieneComa && !tienePunto) {
+    normalizado = raw.replace(',', '.');
+  }
+  const monto = parseFloat(normalizado) || 0;
   const categoria = document.getElementById('gf-categoria').value;
   const dia_mes = parseInt(document.getElementById('gf-dia').value);
   const errEl = document.getElementById('gf-msg-err');
