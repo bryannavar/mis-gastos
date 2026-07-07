@@ -2421,11 +2421,10 @@ function agregarCatEditEspacio(tipo) {
   const input = document.getElementById(inputId);
   const nombre = input.value.trim();
   if(!nombre) return;
-  const nombreLower = nombre.toLowerCase();
+  const nombreLower = nombre.trim().toLowerCase();
   const contenedor = document.getElementById(`ee-cats-${tipo}`);
-  // Verificar duplicado buscando en todos los chips por texto
   const chipsExistentes = contenedor.querySelectorAll('div span:last-child');
-  const yaExiste = [...chipsExistentes].some(span => span.textContent.toLowerCase() === nombreLower);
+  const yaExiste = [...chipsExistentes].some(span => span.textContent.trim().toLowerCase() === nombreLower);
   if(yaExiste) {
     input.value = '';
     return;
@@ -2439,6 +2438,7 @@ function agregarCatEditEspacio(tipo) {
   </div>`);
   input.value = '';
 }
+
 async function guardarEdicionEspacio() {
   const nombre = document.getElementById('ee-nombre').value.trim();
   const moneda = document.getElementById('ee-moneda').value;
