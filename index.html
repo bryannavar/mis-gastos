@@ -2363,7 +2363,7 @@ async function renderEditarEspacio() {
         background:#f0fdf4; color:#15803d; border:1px solid #86efac;
         opacity:${tieneUso ? '0.6' : '1'};
       " ${tieneUso ? '' : `onclick="toggleCatEditar(this, '${cat.id}', '${cat.nombre}', '${tipo}')"`}
-         data-id="${cat.id}" data-activa="true">
+         data-id="${cat.id}" data-nombre="${cat.nombre}" data-activa="true">
         <span>✓</span><span>${cat.nombre}</span>${tieneUso ? '<span style="font-size:10px;color:#888;"> (en uso)</span>' : ''}
       </div>`;
     }).join('');
@@ -2423,7 +2423,7 @@ function agregarCatEditEspacio(tipo) {
   if(!nombre) return;
   const nombreLower = nombre.trim().toLowerCase();
   const contenedor = document.getElementById(`ee-cats-${tipo}`);
-  const chipsExistentes = contenedor.querySelectorAll('div span:last-child');
+  const chipsExistentes = contenedor.querySelectorAll('[data-nombre]');
   const yaExiste = [...chipsExistentes].some(span => span.textContent.trim().toLowerCase() === nombreLower);
   if(yaExiste) {
     input.value = '';
