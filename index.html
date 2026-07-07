@@ -1939,7 +1939,10 @@ function agregarCatCustom(tipo) {
   const input = document.getElementById(inputId);
   const nombre = input.value.trim();
   if(!nombre) return;
-  if(catsSeleccionadas[tipo].has(nombre)) {
+  // Verificar duplicado ignorando mayúsculas/minúsculas
+  const nombreLower = nombre.toLowerCase();
+  const yaExiste = [...catsSeleccionadas[tipo]].some(c => c.toLowerCase() === nombreLower);
+  if(yaExiste) {
     input.value = '';
     return;
   }
