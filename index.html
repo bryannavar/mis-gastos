@@ -2424,7 +2424,7 @@ function agregarCatEditEspacio(tipo) {
   const nombreLower = nombre.trim().toLowerCase();
   const contenedor = document.getElementById(`ee-cats-${tipo}`);
   const chipsExistentes = contenedor.querySelectorAll('[data-nombre]');
-  const yaExiste = [...chipsExistentes].some(span => span.textContent.trim().toLowerCase() === nombreLower);
+  const yaExiste = [...chipsExistentes].some(c => c.dataset.nombre.trim().toLowerCase() === nombreLower); 
   if(yaExiste) {
     input.value = '';
     return;
