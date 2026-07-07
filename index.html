@@ -2421,11 +2421,11 @@ function agregarCatEditEspacio(tipo) {
   const input = document.getElementById(inputId);
   const nombre = input.value.trim();
   if(!nombre) return;
-  // Verificar duplicado ignorando mayúsculas/minúsculas
   const nombreLower = nombre.toLowerCase();
   const contenedor = document.getElementById(`ee-cats-${tipo}`);
-  const chipsExistentes = contenedor.querySelectorAll('[data-nombre]');
-  const yaExiste = [...chipsExistentes].some(c => c.dataset.nombre.toLowerCase() === nombreLower);
+  // Verificar duplicado buscando en todos los chips por texto
+  const chipsExistentes = contenedor.querySelectorAll('div span:last-child');
+  const yaExiste = [...chipsExistentes].some(span => span.textContent.toLowerCase() === nombreLower);
   if(yaExiste) {
     input.value = '';
     return;
